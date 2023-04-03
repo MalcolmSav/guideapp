@@ -1,7 +1,15 @@
-import 'package:flutter/material.dart';
-// import 'package:flutter_tts/flutter_tts.dart';
+import 'dart:async';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-void main() {
+import 'package:exapp/tts.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  TextToSpeech.initTTs();
   runApp(const MyApp());
 }
 
@@ -20,7 +28,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.lime,
         brightness: Brightness.dark, // Set the default brightness
       ),
-      home: const MyHomePage(title: 'Museum Guide app'),
+      home: const MyHomePage(title: 'Museum Guide App'),
     );
   }
 }
@@ -42,7 +50,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<Widget> _children = [
     const HomeWidget(),
     const QRWidget(),
-    const SettingsWidget(),
+    const TTSWidget(),
   ];
 
   void onTabTapped(int index) {
@@ -74,12 +82,12 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SettingsPage(_isDarkThemeEnabled),
-                  ),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) => SettingsPage(_isDarkThemeEnabled),
+                //   ),
+                // );
               },
             ),
           ],
@@ -118,12 +126,44 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class HomeWidget extends StatelessWidget {
-  const HomeWidget({super.key});
+  const HomeWidget({Key? key}) : super(key: key);
+
+  // Future<void> speakText(String text, String languageCode) async {
+  //   FlutterTts flutterTts = FlutterTts();
+  //   await flutterTts.setLanguage(languageCode);
+
+  //   bool isLanguageAvailable =
+  //       await flutterTts.isLanguageAvailable(languageCode);
+  //   if (isLanguageAvailable) {
+  //     await flutterTts.setSpeechRate(1.0);
+  //     await flutterTts.setPitch(1.0);
+  //     await flutterTts.speak(text);
+  //   } else {
+  //     print('Language $languageCode is not available.');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('First Page'),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('First Page'),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                // await requestAudioPermission();
+                // _requestPermission();
+                // TextToSpeech.speak();
+              } catch (e) {
+                print(e.toString());
+              }
+            },
+            child: const Text('Speak'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -148,13 +188,33 @@ class QRWidget extends StatelessWidget {
   }
 }
 
-class SettingsWidget extends StatelessWidget {
-  const SettingsWidget({super.key});
+enum TtsState { playing, stopped, paused, continued }
+
+class TTSWidget extends StatelessWidget {
+  const TTSWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Third Page'),
+    var textController = TextEditingController();
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text("Text to speech"),
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextField(
+            controller: textController,
+          ),
+          ElevatedButton(
+            onPressed: () {
+              TextToSpeech.speak(textController.text);
+            },
+            child: const Text("Speak"),
+          )
+        ],
+      ),
     );
   }
 }
@@ -183,41 +243,41 @@ class ThemeSwitchButton extends StatelessWidget {
 }
 
 //The settings page code
-class SettingsPage extends StatefulWidget {
-  final bool isDarkThemeEnabled;
+// class SettingsPage extends StatefulWidget {
+//   final bool isDarkThemeEnabled;
 
-  const SettingsPage(this.isDarkThemeEnabled, {super.key});
+//   const SettingsPage(this.isDarkThemeEnabled, {super.key});
 
-  @override
-  State<SettingsPage> createState() => _SettingsPageState();
-}
+//   @override
+//   State<SettingsPage> createState() => _SettingsPageState();
+// }
 
-class _SettingsPageState extends State<SettingsPage> {
-  bool _isDarkThemeEnabled = false;
+// class _SettingsPageState extends State<SettingsPage> {
+//   bool _isDarkThemeEnabled = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _isDarkThemeEnabled = widget.isDarkThemeEnabled;
-  }
+//   @override
+//   void initState() {
+//     super.initState();
+//     _isDarkThemeEnabled = widget.isDarkThemeEnabled;
+//   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Settings',
-      theme: ThemeData(
-        primarySwatch: Colors.lime,
-        brightness: _isDarkThemeEnabled ? Brightness.dark : Brightness.light,
-      ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Settings'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Settings',
+//       theme: ThemeData(
+//         primarySwatch: Colors.lime,
+//         brightness: _isDarkThemeEnabled ? Brightness.dark : Brightness.light,
+//       ),
+//       home: Scaffold(
+//         appBar: AppBar(
+//           title: const Text('Settings'),
+//           leading: IconButton(
+//             icon: const Icon(Icons.arrow_back),
+//             onPressed: () => Navigator.pop(context),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
