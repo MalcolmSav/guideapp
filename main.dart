@@ -9,7 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  TextToSpeech.initTTs();
+  // TextToSpeech.initTTs();
   runApp(const MyApp());
 }
 
@@ -190,12 +190,28 @@ class QRWidget extends StatelessWidget {
 
 enum TtsState { playing, stopped, paused, continued }
 
-class TTSWidget extends StatelessWidget {
-  const TTSWidget({super.key});
+class TTSWidget extends StatefulWidget {
+  const TTSWidget({Key? key}) : super(key: key);
+
+  @override
+  _TTSWidgetState createState() => _TTSWidgetState();
+}
+
+class _TTSWidgetState extends State<TTSWidget> {
+  final FlutterTts flutterTts = FlutterTts();
+  TextEditingController textController = TextEditingController();
+  double volume = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    flutterTts.setLanguage("en-US");
+    flutterTts.setSpeechRate(0.5);
+    flutterTts.setVolume(volume);
+  }
 
   @override
   Widget build(BuildContext context) {
-    var textController = TextEditingController();
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -209,13 +225,49 @@ class TTSWidget extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              TextToSpeech.speak(textController.text);
+              _speak(textController.text);
             },
             child: const Text("Speak"),
-          )
+          ),
+          ElevatedButton(
+            onPressed: () {
+              pause();
+            },
+            child: Icon(Icons.pause),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Volume: "),
+              SizedBox(
+                width: 200,
+                child: Slider(
+                  value: volume,
+                  min: 0.0,
+                  max: 1.0,
+                  onChanged: (value) {
+                    setState(() {
+                      volume = value;
+                      flutterTts.setVolume(volume);
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _speak(String text) async {
+    await flutterTts.setVolume(volume);
+    await flutterTts.speak(text);
+  }
+
+  Future<void> pause() async {
+    await flutterTts.pause();
   }
 }
 
