@@ -201,6 +201,9 @@ class _TTSWidgetState extends State<TTSWidget> {
   final FlutterTts flutterTts = FlutterTts();
   TextEditingController textController = TextEditingController();
   double volume = 1.0;
+  bool get isAndroid => !kIsWeb && Platform.isAndroid;
+  String? language;
+  bool isCurrentLanguageInstalled = false;
 
   @override
   void initState() {
@@ -210,6 +213,7 @@ class _TTSWidgetState extends State<TTSWidget> {
     flutterTts.setVolume(volume);
   }
 
+  Future<dynamic> _getLanguages() async => await flutterTts.getLanguages;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -256,10 +260,58 @@ class _TTSWidgetState extends State<TTSWidget> {
               ),
             ],
           ),
+          _languageslider(),
         ],
       ),
     );
   }
+
+  void changedLanguageDropDownItem(String? selectedType) {
+    setState(() {
+      language = selectedType;
+      flutterTts.setLanguage(language!);
+      if (isAndroid) {
+        flutterTts
+            .isLanguageInstalled(language!)
+            .then((value) => isCurrentLanguageInstalled = (value as bool));
+      }
+    });
+  }
+
+  List<DropdownMenuItem<String>> getLanguageDropDownMenuItems(
+      dynamic languages) {
+    var items = <DropdownMenuItem<String>>[];
+    for (dynamic type in languages) {
+      items.add(DropdownMenuItem(
+          value: type as String?, child: Text(type as String)));
+    }
+    return items;
+  }
+
+  Widget _languageslider() => FutureBuilder<dynamic>(
+      future: _getLanguages(),
+      builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+        if (snapshot.hasData) {
+          return _languageDropDownSection(snapshot.data);
+        } else if (snapshot.hasError) {
+          return Text('Error loading languages...');
+        } else
+          return Text('Loading Languages...');
+      });
+
+  Widget _languageDropDownSection(dynamic languages) => Container(
+      padding: EdgeInsets.only(top: 10.0),
+      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        DropdownButton(
+          value: language,
+          items: getLanguageDropDownMenuItems(languages),
+          onChanged: changedLanguageDropDownItem,
+        ),
+        Visibility(
+          visible: isAndroid,
+          child: Text("Is installed: $isCurrentLanguageInstalled"),
+        ),
+      ]));
 
   Future<void> _speak(String text) async {
     await flutterTts.setVolume(volume);
