@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:exapp/tts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -110,8 +112,8 @@ class _MyHomePageState extends State<MyHomePage> {
               // title: Text('Messages'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
+              icon: Icon(Icons.volume_up),
+              label: 'Text-To-Speech',
               // title: Text('Profile'),
             )
           ],
@@ -173,18 +175,24 @@ class QRWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-        child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text('Scan QR'),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: () {},
-          child: const Text('Scan QR Code'),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Mobile Scanner')),
+      body: MobileScanner(
+        // fit: BoxFit.contain,
+        controller: MobileScannerController(
+          detectionSpeed: DetectionSpeed.normal,
+          facing: CameraFacing.front,
+          torchEnabled: true,
         ),
-      ],
-    ));
+        onDetect: (capture) {
+          final List<Barcode> barcodes = capture.barcodes;
+          final Uint8List? image = capture.image;
+          for (final barcode in barcodes) {
+            debugPrint('Barcode found! ${barcode.rawValue}');
+          }
+        },
+      ),
+    );
   }
 }
 
@@ -203,7 +211,12 @@ class _TTSWidgetState extends State<TTSWidget> {
   double volume = 1.0;
   bool get isAndroid => !kIsWeb && Platform.isAndroid;
   String? language;
+  String? _newVoiceText;
+  int end = 0;
+  int currentPosition = 0;
   bool isCurrentLanguageInstalled = false;
+
+  TtsState ttsState = TtsState.stopped;
 
   @override
   void initState() {
@@ -211,6 +224,21 @@ class _TTSWidgetState extends State<TTSWidget> {
     flutterTts.setLanguage("en-US");
     flutterTts.setSpeechRate(0.5);
     flutterTts.setVolume(volume);
+  }
+
+  initTts() {
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+
+    flutterTts.setProgressHandler(
+        (String text, int startOffset, int endOffset, String word) {
+      setState(() {
+        currentPosition = endOffset;
+      });
+    });
   }
 
   Future<dynamic> _getLanguages() async => await flutterTts.getLanguages;
@@ -261,6 +289,8 @@ class _TTSWidgetState extends State<TTSWidget> {
             ],
           ),
           _languageslider(),
+          // ttsState == TtsState.playing ? _progressBar(end) : Text(""),
+          // _progressBar(end),
         ],
       ),
     );
