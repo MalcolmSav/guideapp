@@ -1,4 +1,5 @@
 import 'dart:async';
+// import 'dart:html';
 import 'dart:io' show Platform;
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final List<Widget> _children = [
     const HomeWidget(),
+    GuideWidget(),
     const QRWidget(),
     const TTSWidget(),
   ];
@@ -99,12 +102,17 @@ class _MyHomePageState extends State<MyHomePage> {
         // ),
         body: _children[_currentIndex],
         bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
           onTap: onTabTapped,
           currentIndex: _currentIndex,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
               label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.surround_sound),
+              label: 'Guide',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.camera),
@@ -127,23 +135,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+//First default slide
 class HomeWidget extends StatelessWidget {
   const HomeWidget({Key? key}) : super(key: key);
-
-  // Future<void> speakText(String text, String languageCode) async {
-  //   FlutterTts flutterTts = FlutterTts();
-  //   await flutterTts.setLanguage(languageCode);
-
-  //   bool isLanguageAvailable =
-  //       await flutterTts.isLanguageAvailable(languageCode);
-  //   if (isLanguageAvailable) {
-  //     await flutterTts.setSpeechRate(1.0);
-  //     await flutterTts.setPitch(1.0);
-  //     await flutterTts.speak(text);
-  //   } else {
-  //     print('Language $languageCode is not available.');
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -170,6 +164,137 @@ class HomeWidget extends StatelessWidget {
   }
 }
 
+//Guide example slide
+
+class GuideWidget extends StatefulWidget {
+  const GuideWidget({Key? key}) : super(key: key);
+
+  @override
+  _GuideWidgetState createState() => _GuideWidgetState();
+}
+
+class _GuideWidgetState extends State<GuideWidget> {
+  // GuideWidget({Key? key}) : super(key: key);
+  final audioPlayer = AudioPlayer();
+  bool isPlaying = false;
+  Duration duration = Duration.zero;
+  Duration position = Duration.zero;
+  @override
+  void initState() {
+    super.initState();
+    audioPlayer.onPlayerStateChanged.listen((state) {
+      setState(() {
+        isPlaying = state == PlayerState.PLAYING;
+      });
+    });
+
+    audioPlayer.onDurationChanged.listen((newDuration) {
+      setState(() {
+        duration = newDuration;
+      });
+    });
+
+    audioPlayer.onAudioPositionChanged.listen((newPosition) {
+      setState(() {
+        position = newPosition;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    audioPlayer.dispose();
+    super.dispose();
+  }
+
+  String formatTime(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+
+    return [
+      if (duration.inHours > 0) hours,
+      minutes,
+      seconds,
+    ].join(':');
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.network(
+                  'https://scontent.farn1-2.fna.fbcdn.net/v/t39.30808-6/290550921_6028899657126287_8235422534649890651_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=G_NWDv-wKUAAX-oEmzd&_nc_ht=scontent.farn1-2.fna&oh=00_AfDFVrbAvXvCOn30HCkmCw0JwyOnBRz-WFCdBzeAoMi7_g&oe=64335988',
+                  width: double.infinity,
+                  height: 350,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 32),
+              const Text(
+                'Epic song',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Mull',
+                style: TextStyle(fontSize: 20),
+              ),
+              Slider(
+                min: 0,
+                max: duration.inSeconds.toDouble(),
+                value: position.inSeconds.toDouble(),
+                onChanged: (value) async {
+                  final position = Duration(seconds: value.toInt());
+                  await audioPlayer.seek(position);
+
+                  await audioPlayer.resume();
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(formatTime(position)),
+                    Text(formatTime(duration - position)),
+                  ],
+                ),
+              ),
+              CircleAvatar(
+                radius: 35,
+                child: IconButton(
+                  icon: Icon(
+                    isPlaying ? Icons.pause : Icons.play_arrow,
+                  ),
+                  iconSize: 50,
+                  onPressed: () async {
+                    if (isPlaying) {
+                      await audioPlayer.pause();
+                    } else {
+                      String url =
+                          'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+                      await audioPlayer.play(url);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+//QR scanner slide
 class QRWidget extends StatelessWidget {
   const QRWidget({super.key});
 
@@ -181,7 +306,7 @@ class QRWidget extends StatelessWidget {
         // fit: BoxFit.contain,
         controller: MobileScannerController(
           detectionSpeed: DetectionSpeed.normal,
-          facing: CameraFacing.front,
+          facing: CameraFacing.back,
           torchEnabled: true,
         ),
         onDetect: (capture) {
@@ -196,6 +321,7 @@ class QRWidget extends StatelessWidget {
   }
 }
 
+//Text to speech slide
 enum TtsState { playing, stopped, paused, continued }
 
 class TTSWidget extends StatefulWidget {
@@ -375,43 +501,3 @@ class ThemeSwitchButton extends StatelessWidget {
     );
   }
 }
-
-//The settings page code
-// class SettingsPage extends StatefulWidget {
-//   final bool isDarkThemeEnabled;
-
-//   const SettingsPage(this.isDarkThemeEnabled, {super.key});
-
-//   @override
-//   State<SettingsPage> createState() => _SettingsPageState();
-// }
-
-// class _SettingsPageState extends State<SettingsPage> {
-//   bool _isDarkThemeEnabled = false;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _isDarkThemeEnabled = widget.isDarkThemeEnabled;
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Settings',
-//       theme: ThemeData(
-//         primarySwatch: Colors.lime,
-//         brightness: _isDarkThemeEnabled ? Brightness.dark : Brightness.light,
-//       ),
-//       home: Scaffold(
-//         appBar: AppBar(
-//           title: const Text('Settings'),
-//           leading: IconButton(
-//             icon: const Icon(Icons.arrow_back),
-//             onPressed: () => Navigator.pop(context),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
