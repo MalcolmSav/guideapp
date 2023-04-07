@@ -179,9 +179,23 @@ class _GuideWidgetState extends State<GuideWidget> {
   bool isPlaying = false;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
+
+  List<ImageProvider> images = [
+    NetworkImage(
+        'https://scontent.farn1-2.fna.fbcdn.net/v/t39.30808-6/290550921_6028899657126287_8235422534649890651_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=G_NWDv-wKUAAX-oEmzd&_nc_ht=scontent.farn1-2.fna&oh=00_AfCMhXl-n-vSuBoWrPyDjer6yP9CdH9QSSz1vyZzKfRe_Q&oe=643553C8'),
+    NetworkImage(
+        'https://scontent.farn1-2.fna.fbcdn.net/v/t1.6435-9/108862446_3749458695070406_4152255175104482036_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=174925&_nc_ohc=awFywGa4dCoAX8V9-07&_nc_ht=scontent.farn1-2.fna&oh=00_AfBgAmonahc2CJx9YUclrxH5yTSrMcMpCxpxiaCnCb7i6w&oe=6457B2DC'),
+    NetworkImage(
+        'https://scontent.farn1-2.fna.fbcdn.net/v/t1.6435-9/76933385_2584523041642825_4918329632341622784_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=19026a&_nc_ohc=BTyvyZZ9dZ8AX_aWpym&_nc_ht=scontent.farn1-2.fna&oh=00_AfCsi8UKiI7CmTWJb2rR_DWA2XcyghVDdjcUqlddJD2_rw&oe=64579E0C'),
+  ];
+
+  List<Image> imageWidgets = [];
+  int currentImageIndex = 0;
   @override
   void initState() {
     super.initState();
+    images.forEach((image) => imageWidgets.add(Image(image: image)));
+
     audioPlayer.onPlayerStateChanged.listen((state) {
       setState(() {
         isPlaying = state == PlayerState.PLAYING;
@@ -197,6 +211,7 @@ class _GuideWidgetState extends State<GuideWidget> {
     audioPlayer.onAudioPositionChanged.listen((newPosition) {
       setState(() {
         position = newPosition;
+        currentImageIndex = (position.inSeconds ~/ 10) % images.length;
       });
     });
   }
@@ -229,12 +244,7 @@ class _GuideWidgetState extends State<GuideWidget> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: Image.network(
-                  'https://scontent.farn1-2.fna.fbcdn.net/v/t39.30808-6/290550921_6028899657126287_8235422534649890651_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=G_NWDv-wKUAAX-oEmzd&_nc_ht=scontent.farn1-2.fna&oh=00_AfDFVrbAvXvCOn30HCkmCw0JwyOnBRz-WFCdBzeAoMi7_g&oe=64335988',
-                  width: double.infinity,
-                  height: 350,
-                  fit: BoxFit.cover,
-                ),
+                child: imageWidgets[currentImageIndex],
               ),
               const SizedBox(height: 32),
               const Text(
@@ -501,3 +511,43 @@ class ThemeSwitchButton extends StatelessWidget {
     );
   }
 }
+
+//The settings page code
+// class SettingsPage extends StatefulWidget {
+//   final bool isDarkThemeEnabled;
+
+//   const SettingsPage(this.isDarkThemeEnabled, {super.key});
+
+//   @override
+//   State<SettingsPage> createState() => _SettingsPageState();
+// }
+
+// class _SettingsPageState extends State<SettingsPage> {
+//   bool _isDarkThemeEnabled = false;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _isDarkThemeEnabled = widget.isDarkThemeEnabled;
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Settings',
+//       theme: ThemeData(
+//         primarySwatch: Colors.lime,
+//         brightness: _isDarkThemeEnabled ? Brightness.dark : Brightness.light,
+//       ),
+//       home: Scaffold(
+//         appBar: AppBar(
+//           title: const Text('Settings'),
+//           leading: IconButton(
+//             icon: const Icon(Icons.arrow_back),
+//             onPressed: () => Navigator.pop(context),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
