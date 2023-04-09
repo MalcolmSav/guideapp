@@ -174,22 +174,28 @@ class GuideWidget extends StatefulWidget {
 }
 
 class _GuideWidgetState extends State<GuideWidget> {
-  // GuideWidget({Key? key}) : super(key: key);
   final audioPlayer = AudioPlayer();
   bool isPlaying = false;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
 
   List<ImageProvider> images = [
-    NetworkImage(
+    const NetworkImage(
         'https://scontent.farn1-2.fna.fbcdn.net/v/t39.30808-6/290550921_6028899657126287_8235422534649890651_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=G_NWDv-wKUAAX-oEmzd&_nc_ht=scontent.farn1-2.fna&oh=00_AfCMhXl-n-vSuBoWrPyDjer6yP9CdH9QSSz1vyZzKfRe_Q&oe=643553C8'),
-    NetworkImage(
+    const NetworkImage(
         'https://scontent.farn1-2.fna.fbcdn.net/v/t1.6435-9/108862446_3749458695070406_4152255175104482036_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=174925&_nc_ohc=awFywGa4dCoAX8V9-07&_nc_ht=scontent.farn1-2.fna&oh=00_AfBgAmonahc2CJx9YUclrxH5yTSrMcMpCxpxiaCnCb7i6w&oe=6457B2DC'),
-    NetworkImage(
+    const NetworkImage(
         'https://scontent.farn1-2.fna.fbcdn.net/v/t1.6435-9/76933385_2584523041642825_4918329632341622784_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=19026a&_nc_ohc=BTyvyZZ9dZ8AX_aWpym&_nc_ht=scontent.farn1-2.fna&oh=00_AfCsi8UKiI7CmTWJb2rR_DWA2XcyghVDdjcUqlddJD2_rw&oe=64579E0C'),
   ];
 
   List<Image> imageWidgets = [];
+
+  final List<MapEntry<Duration, int>> imageTimestamps = [
+    const MapEntry(Duration(seconds: 0), 0), // show first image at start
+    const MapEntry(Duration(seconds: 25), 1), // show second image at 25 seconds
+    const MapEntry(Duration(seconds: 60), 2), // show third image at 60 seconds
+  ];
+
   int currentImageIndex = 0;
   @override
   void initState() {
@@ -211,7 +217,20 @@ class _GuideWidgetState extends State<GuideWidget> {
     audioPlayer.onAudioPositionChanged.listen((newPosition) {
       setState(() {
         position = newPosition;
-        currentImageIndex = (position.inSeconds ~/ 10) % images.length;
+        // currentImageIndex = (position.inSeconds ~/ 10) % images.length;
+        // Check if the current position is within a range of a timestamp
+        for (int i = 0; i < imageTimestamps.length; i++) {
+          final timestamp = imageTimestamps[i].key;
+          final imageIndex = imageTimestamps[i].value;
+          final nextTimestamp = i + 1 < imageTimestamps.length
+              ? imageTimestamps[i + 1].key
+              : duration;
+
+          if (position >= timestamp && position < nextTimestamp) {
+            currentImageIndex = imageIndex;
+            break;
+          }
+        }
       });
     });
   }
