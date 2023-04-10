@@ -324,20 +324,66 @@ class _GuideWidgetState extends State<GuideWidget> {
 }
 
 //QR scanner slide
-class QRWidget extends StatelessWidget {
-  const QRWidget({super.key});
+
+class QRWidget extends StatefulWidget {
+  const QRWidget({Key? key}) : super(key: key);
+
+  @override
+  _QRWidgetState createState() => _QRWidgetState();
+}
+
+class _QRWidgetState extends State<QRWidget> {
+  bool isTorchOn = false;
+  late MobileScannerController _scannerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+  }
+
+  void _toggleTorch(bool value) {
+    setState(() {
+      isTorchOn = value;
+    });
+    _scannerController.toggleTorch();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mobile Scanner')),
+      appBar: AppBar(
+        title: const Text('Mobile Scanner'),
+        actions: [
+          Row(
+            children: [
+              Switch(
+                value: isTorchOn,
+                onChanged: _toggleTorch,
+                activeColor: Colors
+                    .white, // set the color of the switch when it is turned on
+              ),
+              Align(
+                alignment: Alignment
+                    .centerLeft, // adjust the position of the flashlight icon
+                child: Icon(
+                  Icons.flashlight_on, // use the flashlight icon
+                  color: isTorchOn
+                      ? Colors.white
+                      : Colors
+                          .grey, // set the color of the icon based on the value of isTorchOn
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: MobileScanner(
-        // fit: BoxFit.contain,
-        controller: MobileScannerController(
-          detectionSpeed: DetectionSpeed.normal,
-          facing: CameraFacing.back,
-          torchEnabled: true,
-        ),
+        controller: _scannerController,
         onDetect: (capture) {
           final List<Barcode> barcodes = capture.barcodes;
           final Uint8List? image = capture.image;
