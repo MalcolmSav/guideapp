@@ -1,6 +1,6 @@
-# Museum Guide App - Thesis work
+# Museum Guide App - Thesis by Malcolm Sävmarker
 
-Introduction
+# Introduction
 
 The digital world has quickly advanced and has changed the way we consume
 information and interact with it. This is very much the case for museums,
