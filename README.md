@@ -1,6 +1,7 @@
 # Museum Guide App - Thesis work
 
 Introduction
+
 The digital world has quickly advanced and has changed the way we consume
 information and interact with it. This is very much the case for museums,
 where digital technology has played a vital part in making innovative ways
