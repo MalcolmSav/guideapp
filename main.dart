@@ -4,12 +4,12 @@ import 'dart:io' show Platform;
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-import 'package:exapp/tts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:exapp/generate_qr_code.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Code for the homepage
+// Code for the Whole apps theme
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
 
@@ -141,25 +141,11 @@ class HomeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('First Page'),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                // await requestAudioPermission();
-                // _requestPermission();
-                // TextToSpeech.speak();
-              } catch (e) {
-                print(e.toString());
-              }
-            },
-            child: const Text('Speak'),
-          ),
-        ],
-      ),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme:
+          ThemeData(primaryColor: Colors.black54, primarySwatch: Colors.brown),
+      home: const GenerateQRCode(),
     );
   }
 }
