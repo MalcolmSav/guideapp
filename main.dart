@@ -10,10 +10,19 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:exapp/generate_qr_code.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:geolocator/geolocator.dart';
+
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // TextToSpeech.initTTs();
+
+  //initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
@@ -53,6 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final List<Widget> _children = [
     const HomeWidget(),
+    const GeoWidget(),
     GuideWidget(),
     const QRWidget(),
     const TTSWidget(),
@@ -111,6 +121,8 @@ class _MyHomePageState extends State<MyHomePage> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
+                icon: Icon(Icons.map), label: 'Geolocation'),
+            BottomNavigationBarItem(
               icon: Icon(Icons.surround_sound),
               label: 'Guide',
             ),
@@ -121,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.volume_up),
-              label: 'Text-To-Speech',
+              label: 'TTS',
               // title: Text('Profile'),
             )
           ],
@@ -150,6 +162,48 @@ class HomeWidget extends StatelessWidget {
   }
 }
 
+//Geolocation slide
+
+class GeoWidget extends StatefulWidget {
+  const GeoWidget({Key? key}) : super(key: key);
+
+  @override
+  _GeoWidgetState createState() => _GeoWidgetState();
+}
+
+class _GeoWidgetState extends State<GeoWidget> {
+  Position? _currentPosition;
+
+  void _getCurrentLocation() async {
+    final permissionStatus = await Permission.locationWhenInUse.request();
+    if (permissionStatus.isGranted) {
+      final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _currentPosition = position;
+      });
+    } else {
+      print('Permission denied');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_currentPosition == null) {
+      return CircularProgressIndicator();
+    } else {
+      return Text(
+          "Latitude: ${_currentPosition!.latitude}, Longitude: ${_currentPosition!.longitude}");
+    }
+  }
+}
+
 //Guide example slide
 
 class GuideWidget extends StatefulWidget {
@@ -167,7 +221,7 @@ class _GuideWidgetState extends State<GuideWidget> {
 
   List<ImageProvider> images = [
     const NetworkImage(
-        'https://scontent.farn1-2.fna.fbcdn.net/v/t39.30808-6/290550921_6028899657126287_8235422534649890651_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=G_NWDv-wKUAAX-oEmzd&_nc_ht=scontent.farn1-2.fna&oh=00_AfCMhXl-n-vSuBoWrPyDjer6yP9CdH9QSSz1vyZzKfRe_Q&oe=643553C8'),
+        'https://scontent.farn1-2.fna.fbcdn.net/v/t1.15752-9/301976253_548352380310218_7266549916230181014_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=ae9488&_nc_ohc=ybPt_xW-zmcAX-yV-tI&_nc_ht=scontent.farn1-2.fna&oh=03_AdQIMwUEwON2UeitW8qJ9ZRmkgqdCL18azS6ozUcrikjOg&oe=646247BE'),
     const NetworkImage(
         'https://scontent.farn1-2.fna.fbcdn.net/v/t1.6435-9/108862446_3749458695070406_4152255175104482036_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=174925&_nc_ohc=awFywGa4dCoAX8V9-07&_nc_ht=scontent.farn1-2.fna&oh=00_AfBgAmonahc2CJx9YUclrxH5yTSrMcMpCxpxiaCnCb7i6w&oe=6457B2DC'),
     const NetworkImage(
