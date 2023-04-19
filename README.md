@@ -31,6 +31,7 @@ simple and accessible, as well as how to enhance the museum experience.
 
 
 Thesis work, Currently in progress
+
 Dependencies: 
 
   provider: ^6.0.0
