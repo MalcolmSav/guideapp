@@ -31,6 +31,7 @@ simple and accessible, as well as how to enhance the museum experience.
 
 
 Thesis work, Currently in progress
+Dependencies: 
 
   provider: ^6.0.0
   
@@ -44,6 +45,14 @@ Thesis work, Currently in progress
   
   audioplayers: ^0.20.1
   
-![bild](https://user-images.githubusercontent.com/113364568/230801329-cbe5dd41-647a-4dc9-8fb9-7abc199330c4.png)
-![bild](https://user-images.githubusercontent.com/113364568/230801320-626f822d-8409-4c80-8bde-df90f9d214fe.png)
-![bild](https://user-images.githubusercontent.com/113364568/229736531-426aa7e2-a720-4136-a9df-1641ccfcd1ec.png)
+  qr_flutter: ^4.0.0
+  
+  firebase_core: ^2.9.0
+  
+  geolocator: ^9.0.2
+  
+  firebase_database: ^10.1.1
+  
+![bild](https://user-images.githubusercontent.com/113364568/233158757-5a7fd3d4-ca93-4ad0-a6b3-12815e245abf.png)
+![bild](https://user-images.githubusercontent.com/113364568/233158669-76ed096f-17dd-4d54-86c8-31c52bcbabb1.png)
+
