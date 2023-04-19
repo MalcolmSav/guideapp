@@ -1,7 +1,10 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 // import 'dart:html';
 import 'dart:io' show Platform;
-import 'dart:typed_data';
+// import 'dart:typed_data';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:flutter/material.dart';
@@ -60,10 +63,11 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isDarkThemeEnabled = false;
   int _currentIndex = 0;
 
+//List of all slides/pages
   final List<Widget> _children = [
     const HomeWidget(),
     const GeoWidget(),
-    GuideWidget(),
+    const GuideWidget(),
     const QRWidget(),
     const TTSWidget(),
   ];
@@ -96,20 +100,10 @@ class _MyHomePageState extends State<MyHomePage> {
           actions: [
             IconButton(
               icon: const Icon(Icons.settings),
-              onPressed: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => SettingsPage(_isDarkThemeEnabled),
-                //   ),
-                // );
-              },
+              onPressed: () {},
             ),
           ],
         ),
-        // body: const Center(
-        //   child: Text('This is the main page.'),
-        // ),
         body: _children[_currentIndex],
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
@@ -128,7 +122,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.camera),
-              label: 'QR-Scanner',
+              label: 'QR-Scan',
               // title: Text('Messages'),
             ),
             BottomNavigationBarItem(
@@ -147,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-//First default slide
+//First Slide with a QR code generator
 class HomeWidget extends StatelessWidget {
   const HomeWidget({Key? key}) : super(key: key);
 
@@ -155,8 +149,7 @@ class HomeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme:
-          ThemeData(primaryColor: Colors.black54, primarySwatch: Colors.brown),
+      theme: ThemeData(primaryColor: Colors.black, primarySwatch: Colors.lime),
       home: const GenerateQRCode(),
     );
   }
@@ -168,10 +161,10 @@ class GeoWidget extends StatefulWidget {
   const GeoWidget({Key? key}) : super(key: key);
 
   @override
-  _GeoWidgetState createState() => _GeoWidgetState();
+  GeoWidgetState createState() => GeoWidgetState();
 }
 
-class _GeoWidgetState extends State<GeoWidget> {
+class GeoWidgetState extends State<GeoWidget> {
   Position? _currentPosition;
 
   void _getCurrentLocation() async {
@@ -196,7 +189,7 @@ class _GeoWidgetState extends State<GeoWidget> {
   @override
   Widget build(BuildContext context) {
     if (_currentPosition == null) {
-      return CircularProgressIndicator();
+      return const CircularProgressIndicator();
     } else {
       return Text(
           "Latitude: ${_currentPosition!.latitude}, Longitude: ${_currentPosition!.longitude}");
@@ -210,10 +203,10 @@ class GuideWidget extends StatefulWidget {
   const GuideWidget({Key? key}) : super(key: key);
 
   @override
-  _GuideWidgetState createState() => _GuideWidgetState();
+  GuideWidgetState createState() => GuideWidgetState();
 }
 
-class _GuideWidgetState extends State<GuideWidget> {
+class GuideWidgetState extends State<GuideWidget> {
   final audioPlayer = AudioPlayer();
   bool isPlaying = false;
   Duration duration = Duration.zero;
@@ -307,7 +300,7 @@ class _GuideWidgetState extends State<GuideWidget> {
               ),
               const SizedBox(height: 32),
               const Text(
-                'Epic song',
+                'Sample sound',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -315,7 +308,7 @@ class _GuideWidgetState extends State<GuideWidget> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Mull',
+                'Malcolm',
                 style: TextStyle(fontSize: 20),
               ),
               Slider(
@@ -369,10 +362,10 @@ class QRWidget extends StatefulWidget {
   const QRWidget({Key? key}) : super(key: key);
 
   @override
-  _QRWidgetState createState() => _QRWidgetState();
+  QRWidgetState createState() => QRWidgetState();
 }
 
-class _QRWidgetState extends State<QRWidget> {
+class QRWidgetState extends State<QRWidget> {
   bool isTorchOn = false;
   late MobileScannerController _scannerController;
 
@@ -426,7 +419,7 @@ class _QRWidgetState extends State<QRWidget> {
         controller: _scannerController,
         onDetect: (capture) {
           final List<Barcode> barcodes = capture.barcodes;
-          final Uint8List? image = capture.image;
+          // final Uint8List? image = capture.image;
           for (final barcode in barcodes) {
             debugPrint('Barcode found! ${barcode.rawValue}');
           }
@@ -443,16 +436,21 @@ class TTSWidget extends StatefulWidget {
   const TTSWidget({Key? key}) : super(key: key);
 
   @override
-  _TTSWidgetState createState() => _TTSWidgetState();
+  TTSWidgetState createState() => TTSWidgetState();
 }
 
-class _TTSWidgetState extends State<TTSWidget> {
+class TTSWidgetState extends State<TTSWidget> {
+  //init database
+  final database = FirebaseDatabase.instance.ref();
+  //database reads
+  String displayText = 'Results go here';
+
   final FlutterTts flutterTts = FlutterTts();
   TextEditingController textController = TextEditingController();
   double volume = 1.0;
   bool get isAndroid => !kIsWeb && Platform.isAndroid;
   String? language;
-  String? _newVoiceText;
+  // String? _newVoiceText;
   int end = 0;
   int currentPosition = 0;
   bool isCurrentLanguageInstalled = false;
@@ -462,9 +460,19 @@ class _TTSWidgetState extends State<TTSWidget> {
   @override
   void initState() {
     super.initState();
+    _activateListeners();
     flutterTts.setLanguage("en-US");
     flutterTts.setSpeechRate(0.5);
     flutterTts.setVolume(volume);
+  }
+
+  void _activateListeners() {
+    database.child('test/description').onValue.listen((event) {
+      final Object? description = event.snapshot.value;
+      setState(() {
+        displayText = 'Today\'s special: $description';
+      });
+    });
   }
 
   initTts() {
@@ -485,6 +493,7 @@ class _TTSWidgetState extends State<TTSWidget> {
   Future<dynamic> _getLanguages() async => await flutterTts.getLanguages;
   @override
   Widget build(BuildContext context) {
+    final dailySpecialRef = database.child('/test');
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -493,6 +502,23 @@ class _TTSWidgetState extends State<TTSWidget> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          //Writes to database
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await dailySpecialRef.set({
+                  'description': 'Latte',
+                  'price': 4.99,
+                });
+                print("Special written");
+              } catch (e) {
+                print("Error!! $e");
+              }
+            },
+            child: const Text('Simple set'),
+          ),
+          //Read from database
+          Text(displayText),
           TextField(
             controller: textController,
           ),
@@ -506,7 +532,7 @@ class _TTSWidgetState extends State<TTSWidget> {
             onPressed: () {
               pause();
             },
-            child: Icon(Icons.pause),
+            child: const Icon(Icons.pause),
           ),
           const SizedBox(height: 20),
           Row(
@@ -565,13 +591,14 @@ class _TTSWidgetState extends State<TTSWidget> {
         if (snapshot.hasData) {
           return _languageDropDownSection(snapshot.data);
         } else if (snapshot.hasError) {
-          return Text('Error loading languages...');
-        } else
-          return Text('Loading Languages...');
+          return const Text('Error loading languages...');
+        } else {
+          return const Text('Loading Languages...');
+        }
       });
 
   Widget _languageDropDownSection(dynamic languages) => Container(
-      padding: EdgeInsets.only(top: 10.0),
+      padding: const EdgeInsets.only(top: 10.0),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         DropdownButton(
           value: language,
@@ -616,43 +643,3 @@ class ThemeSwitchButton extends StatelessWidget {
     );
   }
 }
-
-//The settings page code
-// class SettingsPage extends StatefulWidget {
-//   final bool isDarkThemeEnabled;
-
-//   const SettingsPage(this.isDarkThemeEnabled, {super.key});
-
-//   @override
-//   State<SettingsPage> createState() => _SettingsPageState();
-// }
-
-// class _SettingsPageState extends State<SettingsPage> {
-//   bool _isDarkThemeEnabled = false;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _isDarkThemeEnabled = widget.isDarkThemeEnabled;
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Settings',
-//       theme: ThemeData(
-//         primarySwatch: Colors.lime,
-//         brightness: _isDarkThemeEnabled ? Brightness.dark : Brightness.light,
-//       ),
-//       home: Scaffold(
-//         appBar: AppBar(
-//           title: const Text('Settings'),
-//           leading: IconButton(
-//             icon: const Icon(Icons.arrow_back),
-//             onPressed: () => Navigator.pop(context),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
