@@ -2,21 +2,27 @@
 
 import 'dart:async';
 // import 'dart:html';
-import 'dart:io' show Platform;
+import 'package:http/http.dart' as http;
+import 'dart:io' show File, Platform;
 // import 'dart:typed_data';
+import 'package:exapp/groupmain.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-
+import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:path/path.dart' as path;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:exapp/generate_qr_code.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:geolocator/geolocator.dart';
-
+import 'package:url_launcher/url_launcher.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'firebase_options.dart';
+import 'package:firebase_cached_image/firebase_cached_image.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,8 +31,53 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  runApp(
+    const MaterialApp(
+      title: 'Guide App',
+      home: MyApp(),
+    ),
+  );
+  await FirebaseDynamicLinks.instance.getInitialLink().then((data) {
+    if (data != null) {
+      handleDynamicLink(data);
+    }
+  });
 
-  runApp(const MyApp());
+  FirebaseDynamicLinks.instance.onLink.listen((data) async {
+    if (data != null) {
+      handleDynamicLink(data);
+    }
+  });
+}
+
+void handleDynamicLink(PendingDynamicLinkData data) {
+  final Uri? uri = data.link;
+  if (uri != null && uri.pathSegments.contains('guide')) {
+    // Extract link parameters
+    final String? painting = uri.queryParameters['painting'];
+    final String? audio = uri.queryParameters['audio'];
+
+    // Construct paths to audio and picture files in Firebase Storage
+    const String audioPath = '/audio/audio2.mp3';
+    final String picturePath = 'paintings/$painting/pictures/1.jpg';
+
+    runApp(const MaterialApp(
+      home: GuideWidget(audioPath: audioPath),
+    ));
+  }
+  if (uri != null && uri.pathSegments.contains('guide2')) {
+    // Extract link parameters
+    final String? painting = uri.queryParameters['painting'];
+    final String? audio = uri.queryParameters['audio'];
+
+    // Construct paths to audio and picture files in Firebase Storage
+    const String audioPath = '/audio/audio1.mp3';
+    final String picturePath = 'paintings/$painting/pictures/1.jpg';
+
+    runApp(const MaterialApp(
+      home: GuideWidget(audioPath: audioPath),
+    ));
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -45,6 +96,16 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark, // Set the default brightness
       ),
       home: const MyHomePage(title: 'Museum Guide App'),
+      onGenerateRoute: (RouteSettings settings) {
+        // // Parse the deep link and extract the unique identifier
+        // final uri = Uri.parse(settings.name!);
+        // final routeId = uri.pathSegments.first;
+        // print('onGenerateRoute called');
+        // return MaterialPageRoute(builder: (context) => const GuideWidget());
+        // // Use the routeId to navigate to the corresponding widget
+        // final Widget widget = _routes[routeId]!;
+        // return MaterialPageRoute(builder: (_) => widget);
+      },
     );
   }
 }
@@ -65,12 +126,23 @@ class _MyHomePageState extends State<MyHomePage> {
 
 //List of all slides/pages
   final List<Widget> _children = [
-    const HomeWidget(),
+    const GuideWidget(
+      audioPath: '',
+    ),
     const GeoWidget(),
-    const GuideWidget(),
+    const GenerateQRCode(),
     const QRWidget(),
     const TTSWidget(),
   ];
+  final Map<String, Widget> _routes = {
+    'generateQRCode': const GenerateQRCode(),
+    'geoWidget': const GeoWidget(),
+    'guide': const GuideWidget(
+      audioPath: '',
+    ),
+    'qrWidget': const QRWidget(),
+    'ttsWidget': const TTSWidget(),
+  };
 
   void onTabTapped(int index) {
     setState(() {
@@ -98,6 +170,7 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: AppBar(
           title: Text(widget.title),
           actions: [
+            //TODO: implement the settings page if needed
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {},
@@ -111,14 +184,14 @@ class _MyHomePageState extends State<MyHomePage> {
           currentIndex: _currentIndex,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
+              icon: Icon(Icons.surround_sound),
+              label: 'Guide',
             ),
             BottomNavigationBarItem(
                 icon: Icon(Icons.map), label: 'Geolocation'),
             BottomNavigationBarItem(
-              icon: Icon(Icons.surround_sound),
-              label: 'Guide',
+              icon: Icon(Icons.home),
+              label: 'Invite Code',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.camera),
@@ -137,22 +210,211 @@ class _MyHomePageState extends State<MyHomePage> {
           onThemeSwitch: _toggleTheme,
         ),
       ),
+      onGenerateRoute: (RouteSettings settings) {
+        // Parse the deep link and extract the unique identifier
+        final uri = Uri.parse(settings.name!);
+        final routeId = uri.pathSegments.first;
+        print('onGenerateRoute called');
+
+        // Use the routeId to navigate to the corresponding widget
+        final Widget widget = _routes[GuideWidget]!;
+        return MaterialPageRoute(builder: (_) => widget);
+      },
     );
   }
 }
 
-//First Slide with a QR code generator
-class HomeWidget extends StatelessWidget {
-  const HomeWidget({Key? key}) : super(key: key);
+//Guide example slide
+
+class GuideWidget extends StatefulWidget {
+  const GuideWidget({
+    Key? key,
+    required this.audioPath,
+  }) : super(key: key);
+  final String audioPath;
+  @override
+  GuideWidgetState createState() => GuideWidgetState();
+}
+
+class GuideWidgetState extends State<GuideWidget> {
+  //init database
+  final database = FirebaseDatabase.instance.ref();
+  //Init storage
+  final ref = FirebaseStorage.instance.ref();
+
+  //database reads
+
+  String audio = 'audio track';
+  String audioUrl = 'audiofile';
+
+  final audioPlayer = AudioPlayer();
+  bool isPlaying = false;
+  Duration duration = Duration.zero;
+  Duration position = Duration.zero;
+//Pictures for the guide
+  List<Image> images = [
+    Image(
+      image: FirebaseImageProvider(
+        FirebaseUrl('gs://museum-guide-app.appspot.com/pictures/picture1.jpg'),
+      ),
+    ),
+    Image(
+      image: FirebaseImageProvider(
+        FirebaseUrl('gs://museum-guide-app.appspot.com/pictures/picture2.jpg'),
+      ),
+    ),
+  ];
+
+  List<Image> imageWidgets = [];
+//Timings of the pictures, first value is second and other is index
+  final List<MapEntry<Duration, int>> imageTimestamps = [
+    const MapEntry(Duration(seconds: 0), 0), // show first image at start
+    const MapEntry(Duration(seconds: 5), 1), // show second image at 5 seconds
+    const MapEntry(Duration(seconds: 60), 2), // show third image at 60 seconds
+  ];
+
+  int currentImageIndex = 0;
+  @override
+  void initState() {
+    super.initState();
+    audio = widget.audioPath;
+    downloadFile(audio).then((url) {
+      setState(() {
+        // audioUrl = url;
+      });
+    });
+
+    for (var image in images) {
+      imageWidgets.add(image);
+    }
+
+    audioPlayer.onPlayerStateChanged.listen((state) {
+      setState(() {
+        isPlaying = state == PlayerState.PLAYING;
+      });
+    });
+
+    audioPlayer.onDurationChanged.listen((newDuration) {
+      setState(() {
+        duration = newDuration;
+      });
+    });
+
+    audioPlayer.onAudioPositionChanged.listen((newPosition) {
+      setState(() {
+        position = newPosition;
+        // Check if the current position is within a range of a timestamp
+        for (int i = 0; i < imageTimestamps.length; i++) {
+          final timestamp = imageTimestamps[i].key;
+          final imageIndex = imageTimestamps[i].value;
+          final nextTimestamp = i + 1 < imageTimestamps.length
+              ? imageTimestamps[i + 1].key
+              : duration;
+
+          if (position >= timestamp && position < nextTimestamp) {
+            currentImageIndex = imageIndex;
+            break;
+          }
+        }
+      });
+    });
+  }
+
+//Download audio from firebase storage
+  Future<void> downloadFile(String filePath) async {
+    FirebaseStorage storage = FirebaseStorage.instance;
+    Reference ref = storage.ref().child(filePath);
+    audioUrl = await ref.getDownloadURL();
+    setState(() {});
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primaryColor: Colors.black, primarySwatch: Colors.lime),
-      home: const GenerateQRCode(),
-    );
+  void dispose() {
+    audioPlayer.dispose();
+    super.dispose();
   }
+
+  String formatTime(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+
+    return [
+      if (duration.inHours > 0) hours,
+      minutes,
+      seconds,
+    ].join(':');
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              //images
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: imageWidgets[currentImageIndex],
+              ),
+              const SizedBox(height: 32),
+              const Text(
+                'Guide Example',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Guide Author',
+                style: TextStyle(fontSize: 20),
+              ),
+              //Audio progressbar playback time
+              Slider(
+                min: 0,
+                max: duration.inSeconds.toDouble(),
+                value: position.inSeconds.toDouble(),
+                onChanged: (value) async {
+                  final position = Duration(seconds: value.toInt());
+                  await audioPlayer.seek(position);
+                  await audioPlayer.resume();
+                },
+              ),
+              //Playback time
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(formatTime(position)),
+                    Text(formatTime(duration - position)),
+                  ],
+                ),
+              ),
+              CircleAvatar(
+                radius: 35,
+                child: IconButton(
+                  icon: Icon(
+                    isPlaying ? Icons.pause : Icons.play_arrow,
+                  ),
+                  iconSize: 50,
+                  onPressed: () async {
+                    if (isPlaying) {
+                      await audioPlayer.pause();
+                    } else {
+                      downloadFile(audio);
+                      await audioPlayer.play(audioUrl);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 //Geolocation slide
@@ -197,165 +459,97 @@ class GeoWidgetState extends State<GeoWidget> {
   }
 }
 
-//Guide example slide
+//Generate invite slide
 
-class GuideWidget extends StatefulWidget {
-  const GuideWidget({Key? key}) : super(key: key);
+class GenerateQRCode extends StatefulWidget {
+  const GenerateQRCode({Key? key}) : super(key: key);
 
   @override
-  GuideWidgetState createState() => GuideWidgetState();
+  GenerateQRCodeState createState() => GenerateQRCodeState();
 }
 
-class GuideWidgetState extends State<GuideWidget> {
-  final audioPlayer = AudioPlayer();
-  bool isPlaying = false;
-  Duration duration = Duration.zero;
-  Duration position = Duration.zero;
+class GenerateQRCodeState extends State<GenerateQRCode> {
+  final database = FirebaseDatabase.instance.ref();
+  String? roomId;
 
-  List<ImageProvider> images = [
-    const NetworkImage(
-        'https://scontent.farn1-2.fna.fbcdn.net/v/t1.15752-9/301976253_548352380310218_7266549916230181014_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=ae9488&_nc_ohc=ybPt_xW-zmcAX-yV-tI&_nc_ht=scontent.farn1-2.fna&oh=03_AdQIMwUEwON2UeitW8qJ9ZRmkgqdCL18azS6ozUcrikjOg&oe=646247BE'),
-    const NetworkImage(
-        'https://scontent.farn1-2.fna.fbcdn.net/v/t1.6435-9/108862446_3749458695070406_4152255175104482036_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=174925&_nc_ohc=awFywGa4dCoAX8V9-07&_nc_ht=scontent.farn1-2.fna&oh=00_AfBgAmonahc2CJx9YUclrxH5yTSrMcMpCxpxiaCnCb7i6w&oe=6457B2DC'),
-    const NetworkImage(
-        'https://scontent.farn1-2.fna.fbcdn.net/v/t1.6435-9/76933385_2584523041642825_4918329632341622784_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=19026a&_nc_ohc=BTyvyZZ9dZ8AX_aWpym&_nc_ht=scontent.farn1-2.fna&oh=00_AfCsi8UKiI7CmTWJb2rR_DWA2XcyghVDdjcUqlddJD2_rw&oe=64579E0C'),
-  ];
+  Future<String?> createRoom() async {
+    // Generate a new ID for the room
+    final roomId = database.child('rooms').push().key;
 
-  List<Image> imageWidgets = [];
+    // Create a new node for the room with the generated ID
+    await database.child('rooms/$roomId').set({
+      'createdAt': DateTime.now().toUtc().toString(),
+      'audio': 'your_audio_file_url_here',
+      'pictures': ['your_picture_file_url_here'],
+    });
 
-  final List<MapEntry<Duration, int>> imageTimestamps = [
-    const MapEntry(Duration(seconds: 0), 0), // show first image at start
-    const MapEntry(Duration(seconds: 25), 1), // show second image at 25 seconds
-    const MapEntry(Duration(seconds: 60), 2), // show third image at 60 seconds
-  ];
+    // Return the ID of the newly created room
+    return roomId;
+  }
 
-  int currentImageIndex = 0;
+  Future<Uri> createDynamicLink(String roomId) async {
+    // Create a new DynamicLinkParameters object
+    final dynamicLinkParams = DynamicLinkParameters(
+      link: Uri.parse("https://groupguideapp.page.link/guide"),
+      uriPrefix: "https://groupguideapp.page.link",
+      androidParameters:
+          const AndroidParameters(packageName: "com.example.app.android"),
+      iosParameters: const IOSParameters(bundleId: "com.example.app.ios"),
+    );
+    final dynamicLink =
+        await FirebaseDynamicLinks.instance.buildLink(dynamicLinkParams);
+    return dynamicLink;
+  }
+
+  Future<void> _launchURL(Uri url) async {
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    images.forEach((image) => imageWidgets.add(Image(image: image)));
-
-    audioPlayer.onPlayerStateChanged.listen((state) {
+    createRoom().then((roomId) {
       setState(() {
-        isPlaying = state == PlayerState.PLAYING;
-      });
-    });
-
-    audioPlayer.onDurationChanged.listen((newDuration) {
-      setState(() {
-        duration = newDuration;
-      });
-    });
-
-    audioPlayer.onAudioPositionChanged.listen((newPosition) {
-      setState(() {
-        position = newPosition;
-        // currentImageIndex = (position.inSeconds ~/ 10) % images.length;
-        // Check if the current position is within a range of a timestamp
-        for (int i = 0; i < imageTimestamps.length; i++) {
-          final timestamp = imageTimestamps[i].key;
-          final imageIndex = imageTimestamps[i].value;
-          final nextTimestamp = i + 1 < imageTimestamps.length
-              ? imageTimestamps[i + 1].key
-              : duration;
-
-          if (position >= timestamp && position < nextTimestamp) {
-            currentImageIndex = imageIndex;
-            break;
-          }
-        }
+        this.roomId = roomId;
       });
     });
   }
 
   @override
-  void dispose() {
-    audioPlayer.dispose();
-    super.dispose();
-  }
-
-  String formatTime(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final hours = twoDigits(duration.inHours);
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-
-    return [
-      if (duration.inHours > 0) hours,
-      minutes,
-      seconds,
-    ].join(':');
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: imageWidgets[currentImageIndex],
-              ),
-              const SizedBox(height: 32),
-              const Text(
-                'Sample sound',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Malcolm',
-                style: TextStyle(fontSize: 20),
-              ),
-              Slider(
-                min: 0,
-                max: duration.inSeconds.toDouble(),
-                value: position.inSeconds.toDouble(),
-                onChanged: (value) async {
-                  final position = Duration(seconds: value.toInt());
-                  await audioPlayer.seek(position);
-
-                  await audioPlayer.resume();
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(formatTime(position)),
-                    Text(formatTime(duration - position)),
-                  ],
-                ),
-              ),
-              CircleAvatar(
-                radius: 35,
-                child: IconButton(
-                  icon: Icon(
-                    isPlaying ? Icons.pause : Icons.play_arrow,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Generate QR Code'),
+      ),
+      body: Center(
+        child: roomId == null
+            ? const CircularProgressIndicator()
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  QrImage(
+                    data: 'https://groupguideapp.page.link/guide',
+                    version: QrVersions.auto,
+                    size: 200.0,
                   ),
-                  iconSize: 50,
-                  onPressed: () async {
-                    if (isPlaying) {
-                      await audioPlayer.pause();
-                    } else {
-                      String url =
-                          'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
-                      await audioPlayer.play(url);
-                    }
-                  },
-                ),
+                  const SizedBox(height: 20.0),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final dynamicLink = await createDynamicLink(roomId!);
+                      await _launchURL(dynamicLink);
+                    },
+                    child: const Text('Join Room'),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      );
+      ),
+    );
+  }
 }
-
 //QR scanner slide
 
 class QRWidget extends StatefulWidget {
@@ -394,6 +588,7 @@ class QRWidgetState extends State<QRWidget> {
         actions: [
           Row(
             children: [
+              //Flashlight option
               Switch(
                 value: isTorchOn,
                 onChanged: _toggleTorch,
@@ -419,7 +614,7 @@ class QRWidgetState extends State<QRWidget> {
         controller: _scannerController,
         onDetect: (capture) {
           final List<Barcode> barcodes = capture.barcodes;
-          // final Uint8List? image = capture.image;
+          //Returned QR-code
           for (final barcode in barcodes) {
             debugPrint('Barcode found! ${barcode.rawValue}');
           }
@@ -460,7 +655,7 @@ class TTSWidgetState extends State<TTSWidget> {
   @override
   void initState() {
     super.initState();
-    _activateListeners();
+    // _activateListeners();
     flutterTts.setLanguage("en-US");
     flutterTts.setSpeechRate(0.5);
     flutterTts.setVolume(volume);
@@ -473,6 +668,20 @@ class TTSWidgetState extends State<TTSWidget> {
         displayText = 'Today\'s special: $description';
       });
     });
+  }
+
+  // Define a function to create a new "room" node with a randomly generated ID
+  Future<String?> createRoom() async {
+    // Generate a new ID for the room
+    final roomId = database.child('rooms').push().key;
+
+    // Create a new node for the room with the generated ID
+    await database.child('rooms/$roomId').set({
+      'createdAt': DateTime.now().toUtc().toString(),
+    });
+
+    // Return the ID of the newly created room
+    return roomId;
   }
 
   initTts() {
@@ -494,6 +703,8 @@ class TTSWidgetState extends State<TTSWidget> {
   @override
   Widget build(BuildContext context) {
     final dailySpecialRef = database.child('/test');
+    final guideset = database.child('/testguide');
+    final audiofile = database.child('/audioTracks');
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -517,11 +728,14 @@ class TTSWidgetState extends State<TTSWidget> {
             },
             child: const Text('Simple set'),
           ),
+
           //Read from database
           Text(displayText),
+          //Field to write in
           TextField(
             controller: textController,
           ),
+          //Button to speak the inputed content
           ElevatedButton(
             onPressed: () {
               _speak(textController.text);
@@ -556,8 +770,6 @@ class TTSWidgetState extends State<TTSWidget> {
             ],
           ),
           _languageslider(),
-          // ttsState == TtsState.playing ? _progressBar(end) : Text(""),
-          // _progressBar(end),
         ],
       ),
     );
