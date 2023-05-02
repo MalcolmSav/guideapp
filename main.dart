@@ -23,6 +23,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'firebase_options.dart';
 import 'package:firebase_cached_image/firebase_cached_image.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ void main() async {
   });
 }
 
+//Dynamic linking
 void handleDynamicLink(PendingDynamicLinkData data) {
   final Uri? uri = data.link;
   if (uri != null && uri.pathSegments.contains('guide')) {
@@ -61,8 +63,16 @@ void handleDynamicLink(PendingDynamicLinkData data) {
     const String audioPath = '/audio/audio2.mp3';
     final String picturePath = 'paintings/$painting/pictures/1.jpg';
 
+    const List<String> imagePath = [
+      'gs://museum-guide-app.appspot.com/pictures/picture2.jpg',
+      // 'gs://museum-guide-app.appspot.com/pictures/picture1.jpg',
+    ];
+
     runApp(const MaterialApp(
-      home: GuideWidget(audioPath: audioPath),
+      home: GuideWidget(
+        audioPath: audioPath,
+        imagePath: imagePath,
+      ),
     ));
   }
   if (uri != null && uri.pathSegments.contains('guide2')) {
@@ -72,10 +82,13 @@ void handleDynamicLink(PendingDynamicLinkData data) {
 
     // Construct paths to audio and picture files in Firebase Storage
     const String audioPath = '/audio/audio1.mp3';
-    final String picturePath = 'paintings/$painting/pictures/1.jpg';
 
+    const List<String> imagePath = [
+      'gs://museum-guide-app.appspot.com/pictures/picture1.jpg',
+      'gs://museum-guide-app.appspot.com/pictures/picture2.jpg',
+    ];
     runApp(const MaterialApp(
-      home: GuideWidget(audioPath: audioPath),
+      home: GuideWidget(audioPath: audioPath, imagePath: imagePath),
     ));
   }
 }
@@ -127,7 +140,11 @@ class _MyHomePageState extends State<MyHomePage> {
 //List of all slides/pages
   final List<Widget> _children = [
     const GuideWidget(
-      audioPath: '',
+      audioPath: '/audio/audio1.mp3',
+      imagePath: [
+        'gs://museum-guide-app.appspot.com/pictures/picture1.jpg',
+        'gs://museum-guide-app.appspot.com/pictures/picture3.png'
+      ],
     ),
     const GeoWidget(),
     const GenerateQRCode(),
@@ -138,7 +155,10 @@ class _MyHomePageState extends State<MyHomePage> {
     'generateQRCode': const GenerateQRCode(),
     'geoWidget': const GeoWidget(),
     'guide': const GuideWidget(
-      audioPath: '',
+      audioPath: '/audio/audio1.mp3',
+      imagePath: [
+        'gs://museum-guide-app.appspot.com/pictures/picture1.jpg',
+      ],
     ),
     'qrWidget': const QRWidget(),
     'ttsWidget': const TTSWidget(),
@@ -210,16 +230,6 @@ class _MyHomePageState extends State<MyHomePage> {
           onThemeSwitch: _toggleTheme,
         ),
       ),
-      onGenerateRoute: (RouteSettings settings) {
-        // Parse the deep link and extract the unique identifier
-        final uri = Uri.parse(settings.name!);
-        final routeId = uri.pathSegments.first;
-        print('onGenerateRoute called');
-
-        // Use the routeId to navigate to the corresponding widget
-        final Widget widget = _routes[GuideWidget]!;
-        return MaterialPageRoute(builder: (_) => widget);
-      },
     );
   }
 }
@@ -230,8 +240,10 @@ class GuideWidget extends StatefulWidget {
   const GuideWidget({
     Key? key,
     required this.audioPath,
+    required this.imagePath,
   }) : super(key: key);
   final String audioPath;
+  final List<String> imagePath;
   @override
   GuideWidgetState createState() => GuideWidgetState();
 }
@@ -243,26 +255,26 @@ class GuideWidgetState extends State<GuideWidget> {
   final ref = FirebaseStorage.instance.ref();
 
   //database reads
-
+  bool isPlaying = false;
   String audio = 'audio track';
   String audioUrl = 'audiofile';
 
   final audioPlayer = AudioPlayer();
-  bool isPlaying = false;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
+  List<String> image = [];
 //Pictures for the guide
   List<Image> images = [
-    Image(
-      image: FirebaseImageProvider(
-        FirebaseUrl('gs://museum-guide-app.appspot.com/pictures/picture1.jpg'),
-      ),
-    ),
-    Image(
-      image: FirebaseImageProvider(
-        FirebaseUrl('gs://museum-guide-app.appspot.com/pictures/picture2.jpg'),
-      ),
-    ),
+    // Image(
+    //   image: FirebaseImageProvider(
+    //     FirebaseUrl('gs://museum-guide-app.appspot.com/pictures/picture1.jpg'),
+    //   ),
+    // ),
+    // Image(
+    //   image: FirebaseImageProvider(
+    //     FirebaseUrl('gs://museum-guide-app.appspot.com/pictures/picture2.jpg'),
+    //   ),
+    // ),
   ];
 
   List<Image> imageWidgets = [];
@@ -277,7 +289,14 @@ class GuideWidgetState extends State<GuideWidget> {
   @override
   void initState() {
     super.initState();
+    _activateListeners();
     audio = widget.audioPath;
+    // image = widget.imagePath;
+    for (final url in widget.imagePath) {
+      images.add(Image(
+        image: FirebaseImageProvider(FirebaseUrl(url)),
+      ));
+    }
     downloadFile(audio).then((url) {
       setState(() {
         // audioUrl = url;
@@ -320,6 +339,30 @@ class GuideWidgetState extends State<GuideWidget> {
     });
   }
 
+  void _activateListeners() {
+    database.child('guide1').onValue.listen((event) {
+      final Object? play = event.snapshot.value;
+      if (play != null) {
+        print("Listener used4");
+        print(play.toString());
+        if (play.toString() == "{play: true}") {
+          print("It fucking worked");
+          setState(() {
+            isPlaying = true;
+          });
+          audioPlayer.play(audioUrl);
+        } else {
+          setState(() {
+            isPlaying = false;
+          });
+          audioPlayer.pause();
+        }
+      }
+      print("Listener used2");
+    });
+    print("Listener used");
+  }
+
 //Download audio from firebase storage
   Future<void> downloadFile(String filePath) async {
     FirebaseStorage storage = FirebaseStorage.instance;
@@ -348,73 +391,79 @@ class GuideWidgetState extends State<GuideWidget> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              //images
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: imageWidgets[currentImageIndex],
+  Widget build(BuildContext context) {
+    final guide1 = database.child('/guide1');
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            //images
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: imageWidgets[currentImageIndex],
+            ),
+            const SizedBox(height: 32),
+            const Text(
+              'Guide Example',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 32),
-              const Text(
-                'Guide Example',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Guide Author',
+              style: TextStyle(fontSize: 20),
+            ),
+            Text("$isPlaying"),
+            //Audio progressbar playback time
+            Slider(
+              min: 0,
+              max: duration.inSeconds.toDouble(),
+              value: position.inSeconds.toDouble(),
+              onChanged: (value) async {
+                final position = Duration(seconds: value.toInt());
+                await audioPlayer.seek(position);
+                await audioPlayer.resume();
+              },
+            ),
+            //Playback time
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(formatTime(position)),
+                  Text(formatTime(duration - position)),
+                ],
+              ),
+            ),
+            CircleAvatar(
+              radius: 35,
+              child: IconButton(
+                icon: Icon(
+                  isPlaying ? Icons.pause : Icons.play_arrow,
                 ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Guide Author',
-                style: TextStyle(fontSize: 20),
-              ),
-              //Audio progressbar playback time
-              Slider(
-                min: 0,
-                max: duration.inSeconds.toDouble(),
-                value: position.inSeconds.toDouble(),
-                onChanged: (value) async {
-                  final position = Duration(seconds: value.toInt());
-                  await audioPlayer.seek(position);
-                  await audioPlayer.resume();
+                iconSize: 50,
+                onPressed: () async {
+                  if (isPlaying) {
+                    await audioPlayer.pause();
+                    await guide1.update({'play': 'false'});
+                  } else {
+                    downloadFile(audio);
+                    await guide1.update({'play': 'true'});
+                    await audioPlayer.play(audioUrl);
+                  }
                 },
               ),
-              //Playback time
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(formatTime(position)),
-                    Text(formatTime(duration - position)),
-                  ],
-                ),
-              ),
-              CircleAvatar(
-                radius: 35,
-                child: IconButton(
-                  icon: Icon(
-                    isPlaying ? Icons.pause : Icons.play_arrow,
-                  ),
-                  iconSize: 50,
-                  onPressed: () async {
-                    if (isPlaying) {
-                      await audioPlayer.pause();
-                    } else {
-                      downloadFile(audio);
-                      await audioPlayer.play(audioUrl);
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 //Geolocation slide
@@ -437,8 +486,144 @@ class GeoWidgetState extends State<GeoWidget> {
       setState(() {
         _currentPosition = position;
       });
+      _checkZone();
     } else {
       print('Permission denied');
+    }
+  }
+
+  void _checkZone() {
+    print("In the ZONE3");
+    // Define the zones and their coordinates
+    //Torget
+    final zone1 = <LatLng>[
+      const LatLng(58.406544, 15.590581),
+      const LatLng(58.406198, 15.588713),
+      const LatLng(58.405389, 15.589336),
+      const LatLng(58.405626, 15.590986),
+    ];
+    //Ryttartorp
+    final zone2 = <LatLng>[
+      const LatLng(58.403553, 15.586971),
+      const LatLng(58.403801, 15.589500),
+      const LatLng(58.402533, 15.589992),
+      const LatLng(58.402223, 15.587089),
+    ];
+    //Gamla linköping tåg
+    final zone3 = <LatLng>[
+      const LatLng(58.405038, 15.587285),
+      const LatLng(58.405715, 15.589811),
+      const LatLng(58.404394, 15.591222),
+      const LatLng(58.403976, 15.588211),
+    ];
+
+    //cloetta
+    final zone4 = <LatLng>[
+      const LatLng(58.406494, 15.586535),
+      const LatLng(58.407059, 15.588241),
+      const LatLng(58.406336, 15.589264),
+      const LatLng(58.405592, 15.587458),
+    ];
+
+    // Check if the user is inside a zone and launch the guide if they are
+    if (_currentPosition != null) {
+      final isInZone1 = _isInPolygon(
+          _currentPosition!.latitude, _currentPosition!.longitude, zone1);
+      final isInZone2 = _isInPolygon(
+          _currentPosition!.latitude, _currentPosition!.longitude, zone2);
+      final isInZone3 = _isInPolygon(
+          _currentPosition!.latitude, _currentPosition!.longitude, zone3);
+      final isInZone4 = _isInPolygon(
+          _currentPosition!.latitude, _currentPosition!.longitude, zone4);
+      print("zone 1: $zone1, zone 2: $zone2");
+      if (isInZone1) {
+        print("In the ZONE");
+        _runGuide(1);
+      } else if (isInZone2) {
+        print("In the ZONE2");
+        _runGuide(2);
+      } else if (isInZone3) {
+        print('IN THE ZONE 3');
+        _runGuide(3);
+      } else if (isInZone4) {
+        print('IN THE ZONE 4');
+        _runGuide(4);
+      }
+    }
+  }
+
+  bool _isInPolygon(double lat, double lng, List<LatLng> polygon) {
+    bool c = false;
+    for (int i = 0, j = polygon.length - 1; i < polygon.length; i++) {
+      if ((polygon[i].longitude > lng) != (polygon[j].longitude > lng) &&
+          (lat <
+              (polygon[j].latitude - polygon[i].latitude) *
+                      (lng - polygon[i].longitude) /
+                      (polygon[j].longitude - polygon[i].longitude) +
+                  polygon[i].latitude)) {
+        c = !c;
+      }
+      j = i;
+    }
+    return c;
+  }
+
+  void _runGuide(int zone) {
+    // Construct paths to audio and picture files in Firebase Storage
+    print('Inside zone 3');
+    //Torp
+    if (zone == 1) {
+      const String audioPath = '/audio/audio2.mp3';
+      const List<String> imagePath = [
+        'gs://museum-guide-app.appspot.com/pictures/torg.jpg',
+        'gs://museum-guide-app.appspot.com/pictures/torp.jpg',
+      ];
+
+      runApp(const MaterialApp(
+        home: GuideWidget(
+          audioPath: audioPath,
+          imagePath: imagePath,
+        ),
+      ));
+    } else if (zone == 2) {
+      const String audioPath = '/audio/audio2.mp3';
+      const List<String> imagePath = [
+        'gs://museum-guide-app.appspot.com/pictures/picture2.png',
+        'gs://museum-guide-app.appspot.com/pictures/torp.jpg',
+      ];
+
+      runApp(const MaterialApp(
+        home: GuideWidget(
+          audioPath: audioPath,
+          imagePath: imagePath,
+        ),
+      ));
+    } else if (zone == 3) {
+      const String audioPath = '/audio/audio2.mp3';
+      const List<String> imagePath = [
+        'gs://museum-guide-app.appspot.com/pictures/picture3.png',
+        'gs://museum-guide-app.appspot.com/pictures/picture3.png',
+      ];
+
+      runApp(const MaterialApp(
+        home: GuideWidget(
+          audioPath: audioPath,
+          imagePath: imagePath,
+        ),
+      ));
+    } else if (zone == 4) {
+      const String audioPath = '/audio/audio2.mp3';
+      const List<String> imagePath = [
+        'gs://museum-guide-app.appspot.com/pictures/picture4.jpg',
+        'gs://museum-guide-app.appspot.com/pictures/picture4.jpg',
+      ];
+
+      runApp(const MaterialApp(
+        home: GuideWidget(
+          audioPath: audioPath,
+          imagePath: imagePath,
+        ),
+      ));
     }
   }
 
@@ -446,6 +631,15 @@ class GeoWidgetState extends State<GeoWidget> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+    _checkZone();
+    //Geolocation call
+
+    // _runGuide();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -453,6 +647,7 @@ class GeoWidgetState extends State<GeoWidget> {
     if (_currentPosition == null) {
       return const CircularProgressIndicator();
     } else {
+      _checkZone();
       return Text(
           "Latitude: ${_currentPosition!.latitude}, Longitude: ${_currentPosition!.longitude}");
     }
@@ -655,7 +850,7 @@ class TTSWidgetState extends State<TTSWidget> {
   @override
   void initState() {
     super.initState();
-    // _activateListeners();
+    _activateListeners();
     flutterTts.setLanguage("en-US");
     flutterTts.setSpeechRate(0.5);
     flutterTts.setVolume(volume);
