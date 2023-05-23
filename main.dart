@@ -2,29 +2,29 @@
 
 import 'dart:async';
 // import 'dart:html';
-import 'package:http/http.dart' as http;
-import 'dart:io' show File, Platform;
+// import 'package:http/http.dart' as http;
+import 'dart:io' show Platform; //File;
 // import 'dart:typed_data';
-import 'package:exapp/groupmain.dart';
+// import 'package:exapp/groupmain.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb; //Uint8List,
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:path/path.dart' as path;
+// import 'package:path/path.dart' as path;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:exapp/generate_qr_code.dart';
+// import 'package:exapp/generate_qr_code.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:url_launcher/url_launcher.dart';
+// import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'firebase_options.dart';
 import 'package:firebase_cached_image/firebase_cached_image.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:uuid/uuid.dart';
+// import 'package:uuid/uuid.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +33,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
+// Handle the initial dynamic link
   FirebaseDynamicLinks.instance.getInitialLink().then((data) {
     if (data != null) {
       handleDynamicLink(data);
@@ -51,10 +51,12 @@ void main() async {
             ],
             grouphost: true,
             roomId: "Default Room",
+            roomIdTeacher: "",
+            title: "Welcome to Gamla Linköping",
             svGuide:
-                "Välkommen till Gamla Linköping, en unik historisk stadsdel som tar dig tillbaka i tiden!, Skanna QR koder eller använd dig av platstjänster för att starta en specifik guide, glöm inte att stänga av appen innan du skannar",
+                "Välkommen till Gamla Linköping, en unik historisk stadsdel som tar dig tillbaka i tiden!, Skanna QR koder eller använd dig av platstjänster för att starta en specifik guide.",
             enGuide:
-                "Welcome to Gamla Linköping, a unique historic district that takes you back in time! Scan QR codes or use location services to start a specific guide. Remember to close the app before scanning.",
+                "Welcome to Gamla Linköping, a unique historic district that takes you back in time! Scan QR codes or use location services to start a specific guide.",
           ),
         ),
       );
@@ -73,7 +75,6 @@ void handleDynamicLink(PendingDynamicLinkData data) {
   final Uri? uri = data.link;
   if (uri != null && uri.pathSegments.contains('guide')) {
     // Construct paths to audio and picture files in Firebase Storage
-    const String audioPath = '/audio/audio2.mp3';
 
     const bool grouphost = true;
 
@@ -85,21 +86,18 @@ void handleDynamicLink(PendingDynamicLinkData data) {
 
     //ID of the newly created room
 
-    const List<String> imagePath = [
-      'gs://museum-guide-app.appspot.com/pictures/picture2.jpg',
-      'gs://museum-guide-app.appspot.com/pictures/picture1.jpg',
-    ];
-
     runApp(
       const MaterialApp(
         home: MyHomePage(
           audioPath: '/audio/audio2.mp3',
           imagePath: [
-            'gs://museum-guide-app.appspot.com/pictures/picture4.jpg',
+            'gs://museum-guide-app.appspot.com/pictures/pictures/Torget/torg.jpg',
             'gs://museum-guide-app.appspot.com/pictures/picture3.png',
           ],
           grouphost: grouphost,
           roomId: "guide3",
+          roomIdTeacher: "",
+          title: "First Guide",
           svGuide: "Thi",
           enGuide: "aah",
         ),
@@ -109,15 +107,11 @@ void handleDynamicLink(PendingDynamicLinkData data) {
   // Guide för tåget.
   else if (uri != null && uri.pathSegments.contains('guide2')) {
 // Extract link parameters
-
-    // Construct paths to audio and picture files in Firebase Storage
-    const String audioPath = '/audio/audio2.mp3';
-
     const bool grouphost = true;
 
     final database = FirebaseDatabase.instance.ref();
 
-    const roomId = "guide3";
+    const roomId = "guide2";
     // Create a new node for the room with the generated ID
     database.child('rooms/$roomId').set({
       'enPlay': 'false',
@@ -125,11 +119,6 @@ void handleDynamicLink(PendingDynamicLinkData data) {
     });
 
     //ID of the newly created room
-
-    const List<String> imagePath = [
-      'gs://museum-guide-app.appspot.com/pictures/picture2.jpg',
-      'gs://museum-guide-app.appspot.com/pictures/picture1.jpg',
-    ];
 
     runApp(
       const MaterialApp(
@@ -142,22 +131,21 @@ void handleDynamicLink(PendingDynamicLinkData data) {
             'gs://museum-guide-app.appspot.com/pictures/Train/trainback.jpg',
           ],
           grouphost: grouphost,
-          roomId: "guide3",
+          roomId: "guide2",
+          roomIdTeacher: "guide3",
+          title: "The Red Train",
           svGuide:
               "Välkommen till Gamla Linköping, en unik historisk stadsdel som tar dig tillbaka i tiden! I denna guide kommer vi att använda bilder för att guida dig genom det röda tåget och dess olika delar. Helheten av det röda tåget, Första bilden ger en överblick av det röda tåget. Tåget är klätt i den klassiska röda färgen som ger det sin karaktär. Låt blicken svepa över hela tåget och beundra dess historiska charm och eleganta design. Utsikten från förarsätet, I den här bilden får du uppleva utsikten från förarsätet. Föreställ dig själv som föraren och ta del av den vy som mötte dem när de körde tåget. Följ rälsen med blicken och föreställ dig resan genom landskapet, precis som det gjordes under tågets aktiva tid. Låt fantasin ta dig tillbaka till en svunnen era av järnvägsresor. Motorhuven, Den tredje bilden är en närbild på tågets motorhuv. Låt blicken vandra över detaljerna och beundra den tekniska skicklighet som krävdes för att hålla tåget i gång. Tänk på de människor som ansvarade för underhållet och bevara historien om ånga och mekanik som en del av vardagen på järnvägen. Bagageutrymmet,Den fjärde bilden visar bagageutrymmet på tåget. Observera utformningen och tänk på de resenärer som använde detta utrymme för att förvara sina väskor och ägodelar under resan. Låt tankarna vandra till en tid då tåget var en populär och spännande transportmetod.",
           enGuide:
-              "Welcome to Gamla Linköping, a unique historical district that takes you back in time! In this guide, we will use pictures to guide you through the red train and its various parts. The entirety of the red train. The first picture provides an overview of the red train. The train is adorned with the classic red color that gives it its character. Let your gaze sweep over the entire train and admire its historical charm and elegant design. The view from the driver's seat, In this picture, you will experience the view from the driver's seat. Imagine yourself as the train driver and take in the view that greeted them during the train's active days. Follow the tracks with your eyes and envision the journey through the landscape, just as it was done in the train's heyday. Let your imagination take you back to a bygone era of railway travel. The engine hood. The third picture is a close-up of the train's engine hood. Let your gaze wander over the details and admire the technical skill required to keep the train running. Think about the people who were responsible for its maintenance and preserving the history of steam and mechanics as part of everyday life on the railway. The luggage compartment, The fourth picture shows the train's luggage compartment. Take note of its design and think about the travelers who used this space to store their bags and belongings during the journey. Let your thoughts wander to a time when the train was a popular and exciting mode of transportation.",
+              "Welcome to Gamla Linköping, a unique historical district that takes you back in time! In this guide, we will use pictures to guide you through the red train and its various parts. The entirety of the red train. The first picture provides an overview of the red train. The train is adorned with the classic red color that gives it its character. The view from the driver's seat, In this picture, you will experience the view from the driver's seat. Imagine yourself as the train driver and take in the view that greeted them during the train's active days. Follow the tracks with your eyes and envision the journey through the landscape, just as it was done in the train's heyday. Let your imagination take you back to a bygone era of railway travel. The engine hood. The third picture is a close-up of the train's engine hood. Let your gaze wander over the details and admire the technical skill required to keep the train running. Think about the people who were responsible for its maintenance and preserving the history of steam and mechanics as part of everyday life on the railway. The luggage compartment, The fourth picture shows the train's luggage compartment. Take note of its design and think about the travelers who used this space to store their bags and belongings during the journey. Let your thoughts wander to a time when the train was a popular and exciting mode of transportation.",
         ),
       ),
     );
   } else if (uri != null && uri.pathSegments.contains('guide3')) {
     // Extract link parameters
     // Construct paths to audio and picture files in Firebase Storage
-    const String audioPath = '/audio/audio2.mp3';
 
     const bool grouphost = false;
-
-    final database = FirebaseDatabase.instance.ref();
 
     // final roomId = const Uuid().v4().replaceAll('-', '');
 
@@ -168,26 +156,236 @@ void handleDynamicLink(PendingDynamicLinkData data) {
 
     //ID of the newly created room
 
-    const List<String> imagePath = [
-      'gs://museum-guide-app.appspot.com/pictures/picture2.jpg',
-      'gs://museum-guide-app.appspot.com/pictures/picture1.jpg',
-    ];
+    runApp(
+      const MaterialApp(
+        home: MyHomePage(
+          audioPath: '/audio/audio2.mp3',
+          imagePath: [
+            'gs://museum-guide-app.appspot.com/pictures/Train/train.png',
+            'gs://museum-guide-app.appspot.com/pictures/Train/trainhead.jpg',
+            'gs://museum-guide-app.appspot.com/pictures/Train/trainmotor.jpg',
+            'gs://museum-guide-app.appspot.com/pictures/Train/trainback.jpg',
+          ],
+          grouphost: grouphost,
+          roomId: "guide2",
+          roomIdTeacher: "guide3",
+          title: "The Red Train",
+          svGuide:
+              "Välkommen till Gamla Linköping, en unik historisk stadsdel som tar dig tillbaka i tiden! I denna guide kommer vi att använda bilder för att guida dig genom det röda tåget och dess olika delar. Helheten av det röda tåget, Första bilden ger en överblick av det röda tåget. Tåget är klätt i den klassiska röda färgen som ger det sin karaktär. Låt blicken svepa över hela tåget och beundra dess historiska charm och eleganta design. Utsikten från förarsätet, I den här bilden får du uppleva utsikten från förarsätet. Föreställ dig själv som föraren och ta del av den vy som mötte dem när de körde tåget. Följ rälsen med blicken och föreställ dig resan genom landskapet, precis som det gjordes under tågets aktiva tid. Låt fantasin ta dig tillbaka till en svunnen era av järnvägsresor. Motorhuven, Den tredje bilden är en närbild på tågets motorhuv. Låt blicken vandra över detaljerna och beundra den tekniska skicklighet som krävdes för att hålla tåget i gång. Tänk på de människor som ansvarade för underhållet och bevara historien om ånga och mekanik som en del av vardagen på järnvägen. Bagageutrymmet,Den fjärde bilden visar bagageutrymmet på tåget. Observera utformningen och tänk på de resenärer som använde detta utrymme för att förvara sina väskor och ägodelar under resan. Låt tankarna vandra till en tid då tåget var en populär och spännande transportmetod.",
+          enGuide:
+              "Welcome to Gamla Linköping, a unique historical district that takes you back in time! In this guide, we will use pictures to guide you through the red train and its various parts. The entirety of the red train. The first picture provides an overview of the red train. The train is adorned with the classic red color that gives it its character. The view from the driver's seat, In this picture, you will experience the view from the driver's seat. Imagine yourself as the train driver and take in the view that greeted them during the train's active days. Follow the tracks with your eyes and envision the journey through the landscape, just as it was done in the train's heyday. Let your imagination take you back to a bygone era of railway travel. The engine hood. The third picture is a close-up of the train's engine hood. Let your gaze wander over the details and admire the technical skill required to keep the train running. Think about the people who were responsible for its maintenance and preserving the history of steam and mechanics as part of everyday life on the railway. The luggage compartment, The fourth picture shows the train's luggage compartment. Take note of its design and think about the travelers who used this space to store their bags and belongings during the journey. Let your thoughts wander to a time when the train was a popular and exciting mode of transportation.",
+        ),
+      ),
+    );
+    //Cloetta
+  } else if (uri != null && uri.pathSegments.contains('guide4')) {
+// Extract link parameters
+
+    const bool grouphost = true;
+
+    final database = FirebaseDatabase.instance.ref();
+
+    const roomId = "guide4";
+    // Create a new node for the room with the generated ID
+    database.child('rooms/$roomId').set({
+      'enPlay': 'false',
+      'svPlay': 'false',
+    });
+
+    //ID of the newly created room
+
+    runApp(
+      const MaterialApp(
+        home: MyHomePage(
+            audioPath: '/audio/audio2.mp3',
+            imagePath: [
+              'gs://museum-guide-app.appspot.com/pictures/Torget/torg.jpg',
+              'gs://museum-guide-app.appspot.com/pictures/Torget/korvboden.jpg',
+              'gs://museum-guide-app.appspot.com/pictures/Torget/honung.jpg',
+              'gs://museum-guide-app.appspot.com/pictures/Torget/handel.jpg',
+            ],
+            grouphost: grouphost,
+            roomId: "guide4",
+            roomIdTeacher: "guide5",
+            title: "The Square Street",
+            svGuide:
+                "Den första bilden ger en övergripande vy över Torget. Ta in scenen och betrakta de charmiga byggnaderna, kullerstensgatorna och den livliga atmosfären. Tillåt dig själv att förflyttas till en svunnen era när du fördjupar dig i den historiska miljön. På den andra bilden ser du en korvbod med affischer på väggarna. Låt dig imponeras av den autentiska korvboden och njut av synen av lockande affischer som pryder väggarna. På korvboden är det en vacker röd vägg. Låt dig förtrollas av den rika färgen och den nostalgiska känslan den förmedlar. Därefter möter du en härlig honungsstånd. Ta en stund att uppskatta dess naturliga skönhet och de söta dofterna som sprider sig i luften. Låt din fantasi sväva när du föreställer dig det livliga marknadstrevet, där både lokalbor och besökare njuter av den renaste gyllene honungen. Avslutningsvis fångas du av den livfulla marknadsscenen på Torget. Observera det varierade utbudet av stånd som erbjuder färska råvaror, handgjorda produkter och lokala delikatesser. Ta in synen och ljuden av marknaden, där handlare interagerar med kunder och luften fylls av sorlet från samtal och ibland även prutande.",
+            enGuide:
+                "The first picture provides an overview of Square Street. Take in the scene and observe the charming buildings, cobblestone pavement, and the lively atmosphere. Allow yourself to be transported to a bygone era as you immerse yourself in the historical surroundings. In the second image, you see a shed with posters on the walls. Be impressed by the authentic shed and enjoy the sight of enticing posters adorning the walls. A beautiful red wall adds to its character, enchanting you with its rich color and nostalgic ambiance.. The third picture showcases a delightful honey stand. Take a moment to appreciate the natural beauty and the sweet aromas wafting through the air. Let your imagination wander as you envision the bustling market activity, with locals and visitors alike indulging in the pure, golden goodness of the honey. The last picture captures the vibrant market scene on Square Street. Observe the array of stalls, offering fresh produce, handcrafted goods, and local delicacies. Take in the sights and sounds of the market, where merchants interact with customers and the air is filled with the buzz of conversation and the occasional bargaining."),
+      ),
+    );
+  } else if (uri != null && uri.pathSegments.contains('guide5')) {
+// Extract link parameters
+
+    const bool grouphost = false;
+
+    final database = FirebaseDatabase.instance.ref();
+
+    const roomId = "guide4";
+    // Create a new node for the room with the generated ID
+    database.child('rooms/$roomId').set({
+      'enPlay': 'false',
+      'svPlay': 'false',
+    });
+
+    //ID of the newly created room
+
+    runApp(
+      const MaterialApp(
+        home: MyHomePage(
+            audioPath: '/audio/audio2.mp3',
+            imagePath: [
+              'gs://museum-guide-app.appspot.com/pictures/Torget/torg.jpg',
+              'gs://museum-guide-app.appspot.com/pictures/Torget/korvboden.jpg',
+              'gs://museum-guide-app.appspot.com/pictures/Torget/honung.jpg',
+              'gs://museum-guide-app.appspot.com/pictures/Torget/handel.jpg',
+            ],
+            grouphost: grouphost,
+            roomId: "guide4",
+            roomIdTeacher: "guide5",
+            title: "The Square Street",
+            svGuide:
+                "Den första bilden ger en övergripande vy över Torget. Ta in scenen och betrakta de charmiga byggnaderna, kullerstensgatorna och den livliga atmosfären. Tillåt dig själv att förflyttas till en svunnen era när du fördjupar dig i den historiska miljön. På den andra bilden ser du en korvbod med affischer på väggarna. Låt dig imponeras av den autentiska korvboden och njut av synen av lockande affischer som pryder väggarna. På korvboden är det en vacker röd vägg. Låt dig förtrollas av den rika färgen och den nostalgiska känslan den förmedlar. Därefter möter du en härlig honungsstånd. Ta en stund att uppskatta dess naturliga skönhet och de söta dofterna som sprider sig i luften. Låt din fantasi sväva när du föreställer dig det livliga marknadstrevet, där både lokalbor och besökare njuter av den renaste gyllene honungen. Avslutningsvis fångas du av den livfulla marknadsscenen på Torget. Observera det varierade utbudet av stånd som erbjuder färska råvaror, handgjorda produkter och lokala delikatesser. Ta in synen och ljuden av marknaden, där handlare interagerar med kunder och luften fylls av sorlet från samtal och ibland även prutande.",
+            enGuide:
+                "The first picture provides an overview of Square Street. Take in the scene and observe the charming buildings, cobblestone pavement, and the lively atmosphere. Allow yourself to be transported to a bygone era as you immerse yourself in the historical surroundings. In the second image, you see a shed with posters on the walls. Be impressed by the authentic shed and enjoy the sight of enticing posters adorning the walls. A beautiful red wall adds to its character, enchanting you with its rich color and nostalgic ambiance.. The third picture showcases a delightful honey stand. Take a moment to appreciate the natural beauty and the sweet aromas wafting through the air. Let your imagination wander as you envision the bustling market activity, with locals and visitors alike indulging in the pure, golden goodness of the honey. The last picture captures the vibrant market scene on Square Street. Observe the array of stalls, offering fresh produce, handcrafted goods, and local delicacies. Take in the sights and sounds of the market, where merchants interact with customers and the air is filled with the buzz of conversation and the occasional bargaining."),
+      ),
+    );
+  } else if (uri != null && uri.pathSegments.contains('guide6')) {
+// Extract link parameters
+
+    const bool grouphost = true;
+
+    final database = FirebaseDatabase.instance.ref();
+
+    const roomId = "guide4";
+    // Create a new node for the room with the generated ID
+    database.child('rooms/$roomId').set({
+      'enPlay': 'false',
+      'svPlay': 'false',
+    });
+
+    runApp(const MaterialApp(
+      home: MyHomePage(
+        audioPath: '/audio/audio2.mp3',
+        imagePath: [
+          'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp.jpg',
+          'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp1.jpg',
+          'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp2.jpg',
+          'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp3.jpg',
+        ],
+        grouphost: grouphost,
+        roomId: "guide6",
+        roomIdTeacher: "guide7",
+        title: "Ryttartorp",
+        svGuide:
+            "Den första bilden ger en övergripande vy av ryttartorpet. Ta in scenen och betrakta de vackra röda husen som omger dig. Denna plats utstrålar en genuin lantlig atmosfär och ger en glimt av torpets historia. Låt fantasin ta dig tillbaka i tiden när ryttare och hästar vistades här, redo att ge sig ut på äventyr och utforska de vidsträckta landskapen. I den andra bilden möter du ett individuellt rött hus i ryttartorpet. Låt din blick vandra över husets charmiga detaljer, från fönsterluckor till snidade trädetaljer. Varje element berättar en historia om hantverk och tradition. Känn hur husets röda fasad ger en livlig och karaktäristisk atmosfär till torpet, och föreställ dig de historier som har utspelat sig inom dess väggar. I den tredje bilden får du en känsla av det röda husets inbjudande atmosfär. Även om bilden är tagen utifrån, kan du föreställa dig hur det är att kliva över tröskeln och upptäcka hemtrevligheten inuti, eller varför inte testa själv. Den fjärde och sista bilden ger dig en glimt av den grönskande omgivningen som omger det röda huset. Föreställ dig hur det skulle vara att njuta av en lugn stund utomhus, omgiven av den naturliga skönheten som ryttartorpet erbjuder.",
+        enGuide:
+            "The first picture provides an overview of the equestrian cottage. Take in the scene and observe the beautiful red houses surrounding you. This place exudes a genuine rural atmosphere and offers a glimpse into the history of the cottage. Let your imagination take you back in time when riders and horses resided here, ready to embark on adventures and explore the vast landscapes. In the second picture, you encounter an individual red house within the equestrian cottage. Allow your gaze to wander over the house's charming details, from window shutters to intricately carved wooden elements. Each feature tells a story of craftsmanship and tradition. Feel how the house's red façade adds a lively and distinctive atmosphere to the cottage, and envision the stories that have unfolded within its walls. The third picture gives you a sense of the inviting atmosphere inside the red house. Although the picture is taken from the outside, you can imagine what it would be like to step across the threshold and discover the coziness within. Envision how the sun's rays illuminate the rooms, creating a warm glow through the windows. Let your imagination soar and imagine how you would feel at home in the carefully decorated and welcoming interior of this red house. The fourth and final picture offers a glimpse of the lush surroundings that envelop the red house. Allow yourself to be captivated by the garden's charm, with its thriving plants and well-kept green areas. Imagine the pleasure of enjoying a peaceful moment outdoors, surrounded by the natural beauty that the equestrian cottage provides. The garden creates a perfect contrast to the red house's façade, fostering a harmonious and tranquil atmosphere.",
+      ),
+    ));
+  } else if (uri != null && uri.pathSegments.contains('guide7')) {
+// Extract link parameters
+
+    const bool grouphost = false;
+
+    final database = FirebaseDatabase.instance.ref();
+
+    const roomId = "guide4";
+    // Create a new node for the room with the generated ID
+    database.child('rooms/$roomId').set({
+      'enPlay': 'false',
+      'svPlay': 'false',
+    });
 
     runApp(
       const MaterialApp(
         home: MyHomePage(
           audioPath: '/audio/audio2.mp3',
           imagePath: [
-            'gs://museum-guide-app.appspot.com/pictures/picture4.jpg',
-            'gs://museum-guide-app.appspot.com/pictures/picture3.png',
+            'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp.jpg',
+            'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp1.jpg',
+            'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp2.jpg',
+            'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp3.jpg',
           ],
           grouphost: grouphost,
-          roomId: "guide3",
-          enGuide: "Hello",
-          svGuide: "Hej",
+          roomId: "guide6",
+          roomIdTeacher: "guide7",
+          title: "Ryttartorp",
+          svGuide:
+              "Den första bilden ger en övergripande vy av ryttartorpet. Ta in scenen och betrakta de vackra röda husen som omger dig. Denna plats utstrålar en genuin lantlig atmosfär och ger en glimt av torpets historia. Låt fantasin ta dig tillbaka i tiden när ryttare och hästar vistades här, redo att ge sig ut på äventyr och utforska de vidsträckta landskapen. I den andra bilden möter du ett individuellt rött hus i ryttartorpet. Låt din blick vandra över husets charmiga detaljer, från fönsterluckor till snidade trädetaljer. Varje element berättar en historia om hantverk och tradition. Känn hur husets röda fasad ger en livlig och karaktäristisk atmosfär till torpet, och föreställ dig de historier som har utspelat sig inom dess väggar. I den tredje bilden får du en känsla av det röda husets inbjudande atmosfär. Även om bilden är tagen utifrån, kan du föreställa dig hur det är att kliva över tröskeln och upptäcka hemtrevligheten inuti, eller varför inte testa själv. Den fjärde och sista bilden ger dig en glimt av den grönskande omgivningen som omger det röda huset. Föreställ dig hur det skulle vara att njuta av en lugn stund utomhus, omgiven av den naturliga skönheten som ryttartorpet erbjuder.",
+          enGuide:
+              "The first picture provides an overview of the equestrian cottage. Take in the scene and observe the beautiful red houses surrounding you. This place exudes a genuine rural atmosphere and offers a glimpse into the history of the cottage. Let your imagination take you back in time when riders and horses resided here, ready to embark on adventures and explore the vast landscapes. In the second picture, you encounter an individual red house within the equestrian cottage. Allow your gaze to wander over the house's charming details, from window shutters to intricately carved wooden elements. Each feature tells a story of craftsmanship and tradition. Feel how the house's red façade adds a lively and distinctive atmosphere to the cottage, and envision the stories that have unfolded within its walls. The third picture gives you a sense of the inviting atmosphere inside the red house. Although the picture is taken from the outside, you can imagine what it would be like to step across the threshold and discover the coziness within. Envision how the sun's rays illuminate the rooms, creating a warm glow through the windows. Let your imagination soar and imagine how you would feel at home in the carefully decorated and welcoming interior of this red house. The fourth and final picture offers a glimpse of the lush surroundings that envelop the red house. Allow yourself to be captivated by the garden's charm, with its thriving plants and well-kept green areas. Imagine the pleasure of enjoying a peaceful moment outdoors, surrounded by the natural beauty that the equestrian cottage provides. The garden creates a perfect contrast to the red house's façade, fostering a harmonious and tranquil atmosphere.",
         ),
       ),
     );
+  } else if (uri != null && uri.pathSegments.contains('guide8')) {
+// Extract link parameters
+
+    const bool grouphost = true;
+
+    final database = FirebaseDatabase.instance.ref();
+
+    const roomId = "guide4";
+    // Create a new node for the room with the generated ID
+    database.child('rooms/$roomId').set({
+      'enPlay': 'false',
+      'svPlay': 'false',
+    });
+
+    runApp(const MaterialApp(
+      home: MyHomePage(
+        audioPath: '/audio/audio2.mp3',
+        imagePath: [
+          'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta.jpg',
+          'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta1.jpg',
+          'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta2.jpg',
+          'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta3.jpg',
+        ],
+        grouphost: grouphost,
+        roomId: "guide8",
+        roomIdTeacher: "guide9",
+        title: "Cloetta",
+        svGuide:
+            "Den första bilden ger en övergripande vy av ryttartorpet. Ta in scenen och betrakta de vackra röda husen som omger dig. Denna plats utstrålar en genuin lantlig atmosfär och ger en glimt av torpets historia. Låt fantasin ta dig tillbaka i tiden när ryttare och hästar vistades här, redo att ge sig ut på äventyr och utforska de vidsträckta landskapen. I den andra bilden möter du ett individuellt rött hus i ryttartorpet. Låt din blick vandra över husets charmiga detaljer, från fönsterluckor till snidade trädetaljer. Varje element berättar en historia om hantverk och tradition. Känn hur husets röda fasad ger en livlig och karaktäristisk atmosfär till torpet, och föreställ dig de historier som har utspelat sig inom dess väggar. I den tredje bilden får du en känsla av det röda husets inbjudande atmosfär. Även om bilden är tagen utifrån, kan du föreställa dig hur det är att kliva över tröskeln och upptäcka hemtrevligheten inuti. Den fjärde och sista bilden ger dig en glimt av den grönskande omgivningen som omger det röda huset. Låt dig förföras av trädgårdens charm med frodiga växter och välskötta grönområden. Föreställ dig hur det skulle vara att njuta av en lugn stund utomhus, omgiven av den naturliga skönheten som ryttartorpet erbjuder.",
+        enGuide:
+            "The first picture provides an overview of the equestrian cottage. Take in the scene and observe the beautiful red houses surrounding you. This place exudes a genuine rural atmosphere and offers a glimpse into the history of the cottage. Let your imagination take you back in time when riders and horses resided here, ready to embark on adventures and explore the vast landscapes. In the second picture, you encounter an individual red house within the equestrian cottage. Allow your gaze to wander over the house's charming details, from window shutters to intricately carved wooden elements. Each feature tells a story of craftsmanship and tradition. Feel how the house's red façade adds a lively and distinctive atmosphere to the cottage, and envision the stories that have unfolded within its walls. The third picture gives you a sense of the inviting atmosphere inside the red house. Although the picture is taken from the outside, you can imagine what it would be like to step across the threshold and discover the coziness within. Envision how the sun's rays illuminate the rooms, creating a warm glow through the windows. Let your imagination soar and imagine how you would feel at home in the carefully decorated and welcoming interior of this red house. The fourth and final picture offers a glimpse of the lush surroundings that envelop the red house. Allow yourself to be captivated by the garden's charm, with its thriving plants and well-kept green areas. Imagine the pleasure of enjoying a peaceful moment outdoors, surrounded by the natural beauty that the equestrian cottage provides. The garden creates a perfect contrast to the red house's façade, fostering a harmonious and tranquil atmosphere.",
+      ),
+    ));
+  } else if (uri != null && uri.pathSegments.contains('guide9')) {
+// Extract link parameters
+
+    const bool grouphost = false;
+
+    final database = FirebaseDatabase.instance.ref();
+
+    const roomId = "guide4";
+    // Create a new node for the room with the generated ID
+    database.child('rooms/$roomId').set({
+      'enPlay': 'false',
+      'svPlay': 'false',
+    });
+
+    //ID of the newly created room
+
+    runApp(const MaterialApp(
+      home: MyHomePage(
+        audioPath: '/audio/audio2.mp3',
+        imagePath: [
+          'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta.jpg',
+          'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta1.jpg',
+          'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta2.jpg',
+          'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta3.jpg',
+        ],
+        grouphost: grouphost,
+        roomId: "guide8",
+        roomIdTeacher: "guide9",
+        title: "Cloetta",
+        svGuide:
+            "Den första bilden ger en övergripande vy av ryttartorpet. Ta in scenen och betrakta de vackra röda husen som omger dig. Denna plats utstrålar en genuin lantlig atmosfär och ger en glimt av torpets historia. Låt fantasin ta dig tillbaka i tiden när ryttare och hästar vistades här, redo att ge sig ut på äventyr och utforska de vidsträckta landskapen. I den andra bilden möter du ett individuellt rött hus i ryttartorpet. Låt din blick vandra över husets charmiga detaljer, från fönsterluckor till snidade trädetaljer. Varje element berättar en historia om hantverk och tradition. Känn hur husets röda fasad ger en livlig och karaktäristisk atmosfär till torpet, och föreställ dig de historier som har utspelat sig inom dess väggar. I den tredje bilden får du en känsla av det röda husets inbjudande atmosfär. Även om bilden är tagen utifrån, kan du föreställa dig hur det är att kliva över tröskeln och upptäcka hemtrevligheten inuti. Den fjärde och sista bilden ger dig en glimt av den grönskande omgivningen som omger det röda huset. Låt dig förföras av trädgårdens charm med frodiga växter och välskötta grönområden. Föreställ dig hur det skulle vara att njuta av en lugn stund utomhus, omgiven av den naturliga skönheten som ryttartorpet erbjuder.",
+        enGuide:
+            "The first picture provides an overview of the equestrian cottage. Take in the scene and observe the beautiful red houses surrounding you. This place exudes a genuine rural atmosphere and offers a glimpse into the history of the cottage. Let your imagination take you back in time when riders and horses resided here, ready to embark on adventures and explore the vast landscapes. In the second picture, you encounter an individual red house within the equestrian cottage. Allow your gaze to wander over the house's charming details, from window shutters to intricately carved wooden elements. Each feature tells a story of craftsmanship and tradition. Feel how the house's red façade adds a lively and distinctive atmosphere to the cottage, and envision the stories that have unfolded within its walls. The third picture gives you a sense of the inviting atmosphere inside the red house. Although the picture is taken from the outside, you can imagine what it would be like to step across the threshold and discover the coziness within. Envision how the sun's rays illuminate the rooms, creating a warm glow through the windows. Let your imagination soar and imagine how you would feel at home in the carefully decorated and welcoming interior of this red house. The fourth and final picture offers a glimpse of the lush surroundings that envelop the red house. Allow yourself to be captivated by the garden's charm, with its thriving plants and well-kept green areas. Imagine the pleasure of enjoying a peaceful moment outdoors, surrounded by the natural beauty that the equestrian cottage provides. The garden creates a perfect contrast to the red house's façade, fostering a harmonious and tranquil atmosphere.",
+      ),
+    ));
   }
 }
 
@@ -227,6 +425,8 @@ class MyHomePage extends StatefulWidget {
     required this.imagePath,
     required this.grouphost,
     required this.roomId,
+    required this.roomIdTeacher,
+    required this.title,
     required this.svGuide,
     required this.enGuide,
   }) : super(key: key);
@@ -234,6 +434,8 @@ class MyHomePage extends StatefulWidget {
   final List<String> imagePath;
   final bool grouphost;
   final String? roomId;
+  final String? roomIdTeacher;
+  final String title;
   final String svGuide;
   final String enGuide;
 
@@ -242,7 +444,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   bool _isDarkThemeEnabled = false;
   int _currentIndex = 0;
   bool grouphost = false;
@@ -250,7 +452,9 @@ class _MyHomePageState extends State<MyHomePage> {
   String audioUrl = 'audiofile';
   String enGuide = "English guide";
   String svGuide = "Swedish guide";
+  String title = "Title";
   String? roomId = 'test5';
+  String? roomIdTeacher = "";
   List<String> image = [];
   List<String> imagePath = [];
   List<Image> images = [];
@@ -267,6 +471,8 @@ class _MyHomePageState extends State<MyHomePage> {
     grouphost = widget.grouphost;
     audio = widget.audioPath;
     roomId = widget.roomId;
+    roomIdTeacher = widget.roomIdTeacher;
+    title = widget.title;
     svGuide = widget.svGuide;
     enGuide = widget.enGuide;
     imagePath = widget.imagePath;
@@ -330,18 +536,158 @@ class _MyHomePageState extends State<MyHomePage> {
         imagePath: imagePath,
         grouphost: grouphost,
         roomId: roomId,
+        roomIdTeacher: roomIdTeacher,
+        title: title,
         enGuide: enGuide,
         svGuide: svGuide,
       ),
       const GeoWidget(),
       GenerateQRCode(
         roomId: roomId,
-        //TODO: Fixa så att roomid skickas till generate och skapar en egen qr kod, ska även generera en dynamisk länk.
+        roomIdTeacher: roomIdTeacher,
       ),
       const QRWidget(),
       const TTSWidget(),
     ];
     return MaterialApp(
+      routes: {
+        "/guide2": (context) => const MyHomePage(
+              audioPath: '/audio/audio2.mp3',
+              imagePath: [
+                'gs://museum-guide-app.appspot.com/pictures/Train/train.png',
+                'gs://museum-guide-app.appspot.com/pictures/Train/trainhead.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Train/trainmotor.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Train/trainback.jpg',
+              ],
+              grouphost: true,
+              roomId: "guide2",
+              roomIdTeacher: "guide3",
+              title: "The Red Train",
+              svGuide:
+                  "Välkommen till Gamla Linköping, en unik historisk stadsdel som tar dig tillbaka i tiden! I denna guide kommer vi att använda bilder för att guida dig genom det röda tåget och dess olika delar. Helheten av det röda tåget, Första bilden ger en överblick av det röda tåget. Tåget är klätt i den klassiska röda färgen som ger det sin karaktär. Låt blicken svepa över hela tåget och beundra dess historiska charm och eleganta design. Utsikten från förarsätet, I den här bilden får du uppleva utsikten från förarsätet. Föreställ dig själv som föraren och ta del av den vy som mötte dem när de körde tåget. Följ rälsen med blicken och föreställ dig resan genom landskapet, precis som det gjordes under tågets aktiva tid. Låt fantasin ta dig tillbaka till en svunnen era av järnvägsresor. Motorhuven, Den tredje bilden är en närbild på tågets motorhuv. Låt blicken vandra över detaljerna och beundra den tekniska skicklighet som krävdes för att hålla tåget i gång. Tänk på de människor som ansvarade för underhållet och bevara historien om ånga och mekanik som en del av vardagen på järnvägen. Bagageutrymmet,Den fjärde bilden visar bagageutrymmet på tåget. Observera utformningen och tänk på de resenärer som använde detta utrymme för att förvara sina väskor och ägodelar under resan. Låt tankarna vandra till en tid då tåget var en populär och spännande transportmetod.",
+              enGuide:
+                  "Welcome to Gamla Linköping, a unique historical district that takes you back in time! In this guide, we will use pictures to guide you through the red train and its various parts. The entirety of the red train. The first picture provides an overview of the red train. The train is adorned with the classic red color that gives it its character. The view from the driver's seat, In this picture, you will experience the view from the driver's seat. Imagine yourself as the train driver and take in the view that greeted them during the train's active days. Follow the tracks with your eyes and envision the journey through the landscape, just as it was done in the train's heyday. Let your imagination take you back to a bygone era of railway travel. The engine hood. The third picture is a close-up of the train's engine hood. Let your gaze wander over the details and admire the technical skill required to keep the train running. Think about the people who were responsible for its maintenance and preserving the history of steam and mechanics as part of everyday life on the railway. The luggage compartment, The fourth picture shows the train's luggage compartment. Take note of its design and think about the travelers who used this space to store their bags and belongings during the journey. Let your thoughts wander to a time when the train was a popular and exciting mode of transportation.",
+            ),
+        "/guide3": (context) => const MyHomePage(
+              audioPath: '/audio/audio2.mp3',
+              imagePath: [
+                'gs://museum-guide-app.appspot.com/pictures/Train/train.png',
+                'gs://museum-guide-app.appspot.com/pictures/Train/trainhead.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Train/trainmotor.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Train/trainback.jpg',
+              ],
+              grouphost: false,
+              roomId: "guide2",
+              roomIdTeacher: "guide3",
+              title: "The Red Train",
+              svGuide:
+                  "Välkommen till Gamla Linköping, en unik historisk stadsdel som tar dig tillbaka i tiden! I denna guide kommer vi att använda bilder för att guida dig genom det röda tåget och dess olika delar. Helheten av det röda tåget, Första bilden ger en överblick av det röda tåget. Tåget är klätt i den klassiska röda färgen som ger det sin karaktär. Låt blicken svepa över hela tåget och beundra dess historiska charm och eleganta design. Utsikten från förarsätet, I den här bilden får du uppleva utsikten från förarsätet. Föreställ dig själv som föraren och ta del av den vy som mötte dem när de körde tåget. Följ rälsen med blicken och föreställ dig resan genom landskapet, precis som det gjordes under tågets aktiva tid. Låt fantasin ta dig tillbaka till en svunnen era av järnvägsresor. Motorhuven, Den tredje bilden är en närbild på tågets motorhuv. Låt blicken vandra över detaljerna och beundra den tekniska skicklighet som krävdes för att hålla tåget i gång. Tänk på de människor som ansvarade för underhållet och bevara historien om ånga och mekanik som en del av vardagen på järnvägen. Bagageutrymmet,Den fjärde bilden visar bagageutrymmet på tåget. Observera utformningen och tänk på de resenärer som använde detta utrymme för att förvara sina väskor och ägodelar under resan. Låt tankarna vandra till en tid då tåget var en populär och spännande transportmetod.",
+              enGuide:
+                  "Welcome to Gamla Linköping, a unique historical district that takes you back in time! In this guide, we will use pictures to guide you through the red train and its various parts. The entirety of the red train. The first picture provides an overview of the red train. The train is adorned with the classic red color that gives it its character. The view from the driver's seat, In this picture, you will experience the view from the driver's seat. Imagine yourself as the train driver and take in the view that greeted them during the train's active days. Follow the tracks with your eyes and envision the journey through the landscape, just as it was done in the train's heyday. Let your imagination take you back to a bygone era of railway travel. The engine hood. The third picture is a close-up of the train's engine hood. Let your gaze wander over the details and admire the technical skill required to keep the train running. Think about the people who were responsible for its maintenance and preserving the history of steam and mechanics as part of everyday life on the railway. The luggage compartment, The fourth picture shows the train's luggage compartment. Take note of its design and think about the travelers who used this space to store their bags and belongings during the journey. Let your thoughts wander to a time when the train was a popular and exciting mode of transportation.",
+            ),
+        "/guide4": (context) => const MyHomePage(
+              audioPath: '/audio/audio2.mp3',
+              imagePath: [
+                'gs://museum-guide-app.appspot.com/pictures/Torget/torg.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Torget/korvboden.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Torget/honung.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Torget/handel.jpg',
+              ],
+              grouphost: true,
+              roomId: "guide4",
+              roomIdTeacher: "guide5",
+              title: "The Square Street",
+              svGuide:
+                  "Välkommen till guiden som går igenom gamla linköpings torg. Kolla på bilderna och lyssna på guiden för att veta vad du ska fokusera på. Den första bilden ger en övergripande vy över Torget och dess estetiska affärer som har varit här i många år. Ta in scenen och betrakta de charmiga byggnaderna, kullerstensgatorna och den livliga atmosfären. Tillåt dig själv att förflyttas till en svunnen era när du fördjupar dig i den historiska miljön och de fina byggnaderna i olika färger. På den andra bilden ser du en korvbod med affischer på väggarna. Låt dig imponeras av den autentiska korvboden och njut av synen av lockande affischer som pryder väggarna. På korvboden är det en vacker röd vägg. Låt dig förtrollas av den rika färgen och den nostalgiska känslan den förmedlar. Även fast färgen har blivit sliten med sin tid så återstår charmen. Därefter möter du ett härligt honungsstånd. Ta en stund att uppskatta dess naturliga skönhet och de söta dofterna som sprider sig i luften. Låt din fantasi sväva när du föreställer dig det livliga marknadstrevet, där både lokalbor och besökare njuter av den renaste gyllene honungen. Än idag så njuter besökare av honungen som produceras lokalt och ekologiskt, vilket kanske gör den lite extra god. Det går även att provsmaka honungen för att veta vilken sort som är sin smak. Avslutningsvis fångas du av den livfulla marknadsscenen på Torget. Observera det varierade utbudet av stånd som erbjuder färska råvaror, handgjorda produkter och lokala delikatesser.",
+              enGuide:
+                  "Welcome to the guide that will go through the square street in Linkoping. Look at the pictures and listen to the guide to know what you should look at. The first picture provides an overview of Square Street. Take in the scene and observe the charming buildings, cobblestone pavement, and the lively atmosphere. Allow yourself to be transported to a bygone era as you immerse yourself in the historical surroundings. In the second image, you see a shed with posters on the walls. Be impressed by the authentic shed and enjoy the sight of enticing posters adorning the walls. A beautiful red wall adds to its character, enchanting you with its rich color and nostalgic ambiance.. The third picture showcases a delightful honey stand. Take a moment to appreciate the natural beauty and the sweet aromas wafting through the air. Let your imagination wander as you envision the bustling market activity, with locals and visitors alike indulging in the pure, golden goodness of the honey. The last picture captures the vibrant market scene on Square Street. Observe the array of stalls, offering fresh produce, handcrafted goods, and local delicacies. Take in the sights and sounds of the market, where merchants interact with customers and the air is filled with the buzz of conversation and the occasional bargaining.",
+            ),
+        "/guide5": (context) => const MyHomePage(
+              audioPath: '/audio/audio2.mp3',
+              imagePath: [
+                'gs://museum-guide-app.appspot.com/pictures/Torget/torg.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Torget/korvboden.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Torget/honung.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Torget/handel.jpg',
+              ],
+              grouphost: false,
+              roomId: "guide4",
+              roomIdTeacher: "guide5",
+              title: "The Square Street",
+              svGuide:
+                  "Välkommen till guiden som går igenom gamla linköpings torg. Kolla på bilderna och lyssna på guiden för att veta vad du ska fokusera på. Den första bilden ger en övergripande vy över Torget och dess estetiska affärer som har varit här i många år. Ta in scenen och betrakta de charmiga byggnaderna, kullerstensgatorna och den livliga atmosfären. Tillåt dig själv att förflyttas till en svunnen era när du fördjupar dig i den historiska miljön och de fina byggnaderna i olika färger. På den andra bilden ser du en korvbod med affischer på väggarna. Låt dig imponeras av den autentiska korvboden och njut av synen av lockande affischer som pryder väggarna. På korvboden är det en vacker röd vägg. Låt dig förtrollas av den rika färgen och den nostalgiska känslan den förmedlar. Även fast färgen har blivit sliten med sin tid så återstår charmen. Därefter möter du ett härligt honungsstånd. Ta en stund att uppskatta dess naturliga skönhet och de söta dofterna som sprider sig i luften. Låt din fantasi sväva när du föreställer dig det livliga marknadstrevet, där både lokalbor och besökare njuter av den renaste gyllene honungen. Än idag så njuter besökare av honungen som produceras lokalt och ekologiskt, vilket kanske gör den lite extra god. Det går även att provsmaka honungen för att veta vilken sort som är sin smak. Avslutningsvis fångas du av den livfulla marknadsscenen på Torget. Observera det varierade utbudet av stånd som erbjuder färska råvaror, handgjorda produkter och lokala delikatesser.",
+              enGuide:
+                  "Welcome to the guide that will go through the square street in Linkoping. Look at the pictures and listen to the guide to know what you should look at. The first picture provides an overview of Square Street. Take in the scene and observe the charming buildings, cobblestone pavement, and the lively atmosphere. Allow yourself to be transported to a bygone era as you immerse yourself in the historical surroundings. In the second image, you see a shed with posters on the walls. Be impressed by the authentic shed and enjoy the sight of enticing posters adorning the walls. A beautiful red wall adds to its character, enchanting you with its rich color and nostalgic ambiance.. The third picture showcases a delightful honey stand. Take a moment to appreciate the natural beauty and the sweet aromas wafting through the air. Let your imagination wander as you envision the bustling market activity, with locals and visitors alike indulging in the pure, golden goodness of the honey. The last picture captures the vibrant market scene on Square Street. Observe the array of stalls, offering fresh produce, handcrafted goods, and local delicacies. Take in the sights and sounds of the market, where merchants interact with customers and the air is filled with the buzz of conversation and the occasional bargaining.",
+            ),
+        "/guide6": (context) => const MyHomePage(
+              audioPath: '/audio/audio2.mp3',
+              imagePath: [
+                'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp1.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp2.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp3.jpg',
+              ],
+              grouphost: true,
+              roomId: "guide6",
+              roomIdTeacher: "guide7",
+              title: "Ryttartorp",
+              svGuide:
+                  "Den första bilden ger en övergripande vy av ryttartorpet. Ta in scenen och betrakta de vackra röda husen som omger dig. Denna plats utstrålar en genuin lantlig atmosfär och ger en glimt av torpets historia. Låt fantasin ta dig tillbaka i tiden när ryttare och hästar vistades här, redo att ge sig ut på äventyr och utforska de vidsträckta landskapen. I den andra bilden möter du ett individuellt rött hus i ryttartorpet. Låt din blick vandra över husets charmiga detaljer, från fönsterluckor till snidade trädetaljer. Varje element berättar en historia om hantverk och tradition. Känn hur husets röda fasad ger en livlig och karaktäristisk atmosfär till torpet, och föreställ dig de historier som har utspelat sig inom dess väggar. I den tredje bilden får du en känsla av det röda husets inbjudande atmosfär. Även om bilden är tagen utifrån, kan du föreställa dig hur det är att kliva över tröskeln och upptäcka hemtrevligheten inuti, eller varför inte testa själv. Den fjärde och sista bilden ger dig en glimt av den grönskande omgivningen som omger det röda huset. Föreställ dig hur det skulle vara att njuta av en lugn stund utomhus, omgiven av den naturliga skönheten som ryttartorpet erbjuder.",
+              enGuide:
+                  "The first picture provides an overview of the equestrian cottage. Take in the scene and observe the beautiful red houses surrounding you. This place exudes a genuine rural atmosphere and offers a glimpse into the history of the cottage. Let your imagination take you back in time when riders and horses resided here, ready to embark on adventures and explore the vast landscapes. In the second picture, you encounter an individual red house within the equestrian cottage. Allow your gaze to wander over the house's charming details, from window shutters to intricately carved wooden elements. Each feature tells a story of craftsmanship and tradition. Feel how the house's red façade adds a lively and distinctive atmosphere to the cottage, and envision the stories that have unfolded within its walls. The third picture gives you a sense of the inviting atmosphere inside the red house. Although the picture is taken from the outside, you can imagine what it would be like to step across the threshold and discover the coziness within. Envision how the sun's rays illuminate the rooms, creating a warm glow through the windows. Let your imagination soar and imagine how you would feel at home in the carefully decorated and welcoming interior of this red house. The fourth and final picture offers a glimpse of the lush surroundings that envelop the red house. Allow yourself to be captivated by the garden's charm, with its thriving plants and well-kept green areas. Imagine the pleasure of enjoying a peaceful moment outdoors, surrounded by the natural beauty that the equestrian cottage provides. The garden creates a perfect contrast to the red house's façade, fostering a harmonious and tranquil atmosphere.",
+            ),
+        "/guide7": (context) => const MyHomePage(
+              audioPath: '/audio/audio2.mp3',
+              imagePath: [
+                'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp1.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp2.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Ryttartorp/torp3.jpg',
+              ],
+              grouphost: false,
+              roomId: "guide6",
+              roomIdTeacher: "guide7",
+              title: "Ryttartorp",
+              svGuide:
+                  "Den första bilden ger en övergripande vy av ryttartorpet. Ta in scenen och betrakta de vackra röda husen som omger dig. Denna plats utstrålar en genuin lantlig atmosfär och ger en glimt av torpets historia. Låt fantasin ta dig tillbaka i tiden när ryttare och hästar vistades här, redo att ge sig ut på äventyr och utforska de vidsträckta landskapen. I den andra bilden möter du ett individuellt rött hus i ryttartorpet. Låt din blick vandra över husets charmiga detaljer, från fönsterluckor till snidade trädetaljer. Varje element berättar en historia om hantverk och tradition. Känn hur husets röda fasad ger en livlig och karaktäristisk atmosfär till torpet, och föreställ dig de historier som har utspelat sig inom dess väggar. I den tredje bilden får du en känsla av det röda husets inbjudande atmosfär. Även om bilden är tagen utifrån, kan du föreställa dig hur det är att kliva över tröskeln och upptäcka hemtrevligheten inuti, eller varför inte testa själv. Den fjärde och sista bilden ger dig en glimt av den grönskande omgivningen som omger det röda huset. Föreställ dig hur det skulle vara att njuta av en lugn stund utomhus, omgiven av den naturliga skönheten som ryttartorpet erbjuder.",
+              enGuide:
+                  "The first picture provides an overview of the equestrian cottage. Take in the scene and observe the beautiful red houses surrounding you. This place exudes a genuine rural atmosphere and offers a glimpse into the history of the cottage. Let your imagination take you back in time when riders and horses resided here, ready to embark on adventures and explore the vast landscapes. In the second picture, you encounter an individual red house within the equestrian cottage. Allow your gaze to wander over the house's charming details, from window shutters to intricately carved wooden elements. Each feature tells a story of craftsmanship and tradition. Feel how the house's red façade adds a lively and distinctive atmosphere to the cottage, and envision the stories that have unfolded within its walls. The third picture gives you a sense of the inviting atmosphere inside the red house. Although the picture is taken from the outside, you can imagine what it would be like to step across the threshold and discover the coziness within. Envision how the sun's rays illuminate the rooms, creating a warm glow through the windows. Let your imagination soar and imagine how you would feel at home in the carefully decorated and welcoming interior of this red house. The fourth and final picture offers a glimpse of the lush surroundings that envelop the red house. Allow yourself to be captivated by the garden's charm, with its thriving plants and well-kept green areas. Imagine the pleasure of enjoying a peaceful moment outdoors, surrounded by the natural beauty that the equestrian cottage provides. The garden creates a perfect contrast to the red house's façade, fostering a harmonious and tranquil atmosphere.",
+            ),
+        "/guide8": (context) => const MyHomePage(
+              audioPath: '/audio/audio2.mp3',
+              imagePath: [
+                'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta1.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta2.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta3.jpg',
+              ],
+              grouphost: true,
+              roomId: "guide8",
+              roomIdTeacher: "guide9",
+              title: "Cloetta",
+              svGuide:
+                  "Den första bilden ger en överblick av Cloetta-affären. Ta in scenen och betrakta detta chokladparadis för chokladälskare. Här finner du en rad olika chokladprodukter som lockar med sin frestande mångfald. Det är en plats där chokladälskare kan förlora sig och upptäcka nya smaker och spännande kombinationer. I den andra bilden möter du ett fönster med en gammal Cloetta-skylt som stolt visar upp choklad i olika former. Skylten är ett nostalgiskt och charmigt inslag som ger en känsla av tidigare tiders chokladäventyr. Du kan nästan höra klangen av gamla chokladaskar och se de glittrande förpackningarna av metall, det var innan man använde plast för att förvara chokladen. I den tredje bilden möter du ett annat fönster som lockar med sin lakrits. Här möts du av ett fantastiskt utbud av lakrits i olika former och smaker. Låt dig frestas av den intensiva doften av lakrits som sprider sig genom fönstret. Det är en plats där lakritsälskare kan uppfylla sina smaklökar och utforska nya lakritsvarianter. Den fjärde bilden erbjuder en överflöd av chokladkex. Här finner du en härlig samling av chokladkex i olika former och storlekar. Det är en plats där chokladkex-entusiaster kan njuta av den perfekta balansen mellan choklad och kex.",
+              enGuide:
+                  "The first picture provides an overview of the Cloetta store. Take in the scene and behold this chocolate paradise for chocolate lovers. Here, you will discover a range of chocolate products that entice with their alluring diversity. It's a place where chocolate enthusiasts can immerse themselves and explore new flavors and exciting combinations. In the second picture, you encounter a window displaying an old Cloetta sign showcasing chocolates in various forms. The sign exudes nostalgia and charm, evoking a sense of past chocolate adventures. You can almost hear the rustle of old chocolate boxes and see the gleaming metal packaging, before plastic became the norm for storing chocolate. In the third picture, you come across another window tempting you with its assortment of licorice. Here, you are greeted with a fantastic array of licorice in different shapes and flavors. Allow yourself to be lured by the intense aroma of licorice wafting through the window. You can almost feel the soft texture and distinct taste of licorice on your tongue. The fourth picture offers an abundance of chocolate biscuits. Here, you will find a delightful collection of chocolate-coated biscuits in various shapes and sizes. Let yourself be enticed by the creamy chocolate enveloping the crispy biscuits. Each bite provides a perfect harmony of sweetness and crunchiness that satisfies your taste buds. ",
+            ),
+        "/guide9": (context) => const MyHomePage(
+              audioPath: '/audio/audio2.mp3',
+              imagePath: [
+                'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta1.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta2.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Cloetta/cloetta3.jpg',
+              ],
+              grouphost: false,
+              roomId: "guide8",
+              roomIdTeacher: "guide9",
+              title: "Cloetta",
+              svGuide:
+                  "Den första bilden ger en övergripande vy av ryttartorpet. Ta in scenen och betrakta de vackra röda husen som omger dig. Denna plats utstrålar en genuin lantlig atmosfär och ger en glimt av torpets historia. Låt fantasin ta dig tillbaka i tiden när ryttare och hästar vistades här, redo att ge sig ut på äventyr och utforska de vidsträckta landskapen. I den andra bilden möter du ett individuellt rött hus i ryttartorpet. Låt din blick vandra över husets charmiga detaljer, från fönsterluckor till snidade trädetaljer. Varje element berättar en historia om hantverk och tradition. Känn hur husets röda fasad ger en livlig och karaktäristisk atmosfär till torpet, och föreställ dig de historier som har utspelat sig inom dess väggar. I den tredje bilden får du en känsla av det röda husets inbjudande atmosfär. Även om bilden är tagen utifrån, kan du föreställa dig hur det är att kliva över tröskeln och upptäcka hemtrevligheten inuti, eller varför inte testa själv. Den fjärde och sista bilden ger dig en glimt av den grönskande omgivningen som omger det röda huset. Föreställ dig hur det skulle vara att njuta av en lugn stund utomhus, omgiven av den naturliga skönheten som ryttartorpet erbjuder.",
+              enGuide:
+                  "The first picture provides an overview of the equestrian cottage. Take in the scene and observe the beautiful red houses surrounding you. This place exudes a genuine rural atmosphere and offers a glimpse into the history of the cottage. Let your imagination take you back in time when riders and horses resided here, ready to embark on adventures and explore the vast landscapes. In the second picture, you encounter an individual red house within the equestrian cottage. Allow your gaze to wander over the house's charming details, from window shutters to intricately carved wooden elements. Each feature tells a story of craftsmanship and tradition. Feel how the house's red façade adds a lively and distinctive atmosphere to the cottage, and envision the stories that have unfolded within its walls. The third picture gives you a sense of the inviting atmosphere inside the red house. Although the picture is taken from the outside, you can imagine what it would be like to step across the threshold and discover the coziness within. Envision how the sun's rays illuminate the rooms, creating a warm glow through the windows. Let your imagination soar and imagine how you would feel at home in the carefully decorated and welcoming interior of this red house. The fourth and final picture offers a glimpse of the lush surroundings that envelop the red house. Allow yourself to be captivated by the garden's charm, with its thriving plants and well-kept green areas. Imagine the pleasure of enjoying a peaceful moment outdoors, surrounded by the natural beauty that the equestrian cottage provides. The garden creates a perfect contrast to the red house's façade, fostering a harmonious and tranquil atmosphere.",
+            ),
+      },
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.lime,
@@ -397,6 +743,8 @@ class GuideWidget extends StatefulWidget {
     required this.imagePath,
     required this.grouphost,
     required this.roomId,
+    required this.roomIdTeacher,
+    required this.title,
     required this.svGuide,
     required this.enGuide,
   }) : super(key: key);
@@ -404,13 +752,16 @@ class GuideWidget extends StatefulWidget {
   final List<String> imagePath;
   final bool grouphost;
   final String? roomId;
+  final String? roomIdTeacher;
+  final String title;
   final String svGuide;
   final String enGuide;
+
   @override
   GuideWidgetState createState() => GuideWidgetState();
 }
 
-class GuideWidgetState extends State<GuideWidget> {
+class GuideWidgetState extends State<GuideWidget> with WidgetsBindingObserver {
   //init database
   final database = FirebaseDatabase.instance.ref();
   //Init storage
@@ -422,12 +773,14 @@ class GuideWidgetState extends State<GuideWidget> {
   String audioUrl = 'audiofile';
 
   String? roomId = 'test6';
+  String? roomIdTeacher = "";
 
   final audioPlayer = AudioPlayer();
   bool grouphost = false;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
   List<String> image = [];
+  String title = "Title";
 
   //TTS variables
   final FlutterTts flutterTts = FlutterTts();
@@ -451,19 +804,22 @@ class GuideWidgetState extends State<GuideWidget> {
 //Timings of the pictures, first value is second and other is index
   final List<MapEntry<double, int>> imageProgress = [
     const MapEntry(0.0, 0), // show first image at start (progress 0.0)
-    const MapEntry(0.2, 1), // show second image at 20% progress (0.2)
-    const MapEntry(0.6, 2), // show third image at 60% progress (0.6)
-    const MapEntry(1.0, 3), // show fourth image at 100% progress (1.0)
+    const MapEntry(0.25, 1), // show second image at 25% progress (0.25)
+    const MapEntry(0.5, 2), // show third image at 50% progress (0.5)
+    const MapEntry(0.75, 3), // show fourth image at 75% progress (0.75)
   ];
 
   int currentImageIndex = 0;
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     initTts();
     roomId = widget.roomId;
+    roomIdTeacher = widget.roomIdTeacher;
     enGuide = widget.enGuide;
     svGuide = widget.svGuide;
+    title = widget.title;
     _activateListeners();
     flutterTts.setLanguage("en-US");
     flutterTts.setSpeechRate(0.4);
@@ -523,14 +879,15 @@ class GuideWidgetState extends State<GuideWidget> {
 
   void _activateListeners() {
     database.child("rooms/$roomId").onValue.listen((event) {
-      final guide1 = database.child('/rooms/$roomId');
       final Object? play = event.snapshot.value;
       if (play != null) {
         print(play.toString());
         if (play.toString() == "{enPlay: true, svPlay: false}") {
-          setState(() {
-            isPlaying = true;
-          });
+          if (mounted) {
+            setState(() {
+              isPlaying = true;
+            });
+          }
           // audioPlayer.play(audioUrl);
           _speak(enGuide);
           // guide1.update({'play': 'false'});
@@ -541,11 +898,13 @@ class GuideWidgetState extends State<GuideWidget> {
           // audioPlayer.play(audioUrl);
           _speak(svGuide);
         } else {
-          setState(() {
-            isPlaying = false;
-          });
-          audioPlayer.pause();
-          pause();
+          if (mounted) {
+            setState(() {
+              isPlaying = false;
+            });
+
+            pause();
+          }
           // guide1.update({'play': 'false'});
         }
       }
@@ -563,7 +922,215 @@ class GuideWidgetState extends State<GuideWidget> {
   @override
   void dispose() {
     audioPlayer.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App is now in the foreground
+      // Handle any necessary actions
+      handleAppResumed();
+    }
+  }
+
+  void handleAppResumed() async {
+    // Perform actions when the app is resumed from the background
+    // For example, handle dynamic links or update data
+
+    FirebaseDynamicLinks.instance.onLink.listen((data) {
+      final Uri link = data.link;
+      if (link != null) {
+        final String pathSegment = link.pathSegments.last;
+        if (pathSegment == 'guide2') {
+          Navigator.pushNamed(context, data.link.path);
+        } else if (pathSegment == 'guide3') {
+          Navigator.pushNamed(context, data.link.path);
+        } else if (pathSegment == 'guide4') {
+          Navigator.pushNamed(context, data.link.path);
+        } else if (pathSegment == 'guide5') {
+          Navigator.pushNamed(context, data.link.path);
+        } else if (pathSegment == 'guide6') {
+          Navigator.pushNamed(context, data.link.path);
+        } else if (pathSegment == 'guide7') {
+          Navigator.pushNamed(context, data.link.path);
+        } else if (pathSegment == 'guide8') {
+          Navigator.pushNamed(context, data.link.path);
+        } else if (pathSegment == 'guide9') {
+          Navigator.pushNamed(context, data.link.path);
+        } else {
+          // Handle other dynamic links
+          // ...
+        }
+      }
+    });
+
+    print('App resumed from background');
+  }
+
+//Dynamic linking
+  void handleDynamicLinks(PendingDynamicLinkData data) {
+    final Uri? uri = data.link;
+    if (uri != null && uri.pathSegments.contains('guide')) {
+      const bool grouphost = true;
+
+      final database = FirebaseDatabase.instance.ref();
+      final roomId = database.child('rooms').push().key;
+
+      // Create a new node for the room with the generated ID
+      database.child('rooms/$roomId').set({});
+
+      //ID of the newly created room
+
+      runApp(
+        const MaterialApp(
+          home: MyHomePage(
+            audioPath: '/audio/audio2.mp3',
+            imagePath: [
+              'gs://museum-guide-app.appspot.com/pictures/picture4.jpg',
+              'gs://museum-guide-app.appspot.com/pictures/picture3.png',
+            ],
+            grouphost: grouphost,
+            roomId: "guide",
+            roomIdTeacher: "",
+            title: "First Guide",
+            svGuide: "Thi",
+            enGuide: "aah",
+          ),
+        ),
+      );
+    }
+    // Guide för tåget.
+    else if (uri != null && uri.pathSegments.contains('guide2')) {
+// Extract link parameters
+
+      // Construct paths to audio and picture files in Firebase Storage
+      const String audioPath = '/audio/audio2.mp3';
+
+      bool grouphost = true;
+
+      final database = FirebaseDatabase.instance.ref();
+
+      String roomId = "guide2";
+      String roomIdTeacher = "guide3";
+      // Create a new node for the room with the generated ID
+      database.child('rooms/$roomId').set({
+        'enPlay': 'false',
+        'svPlay': 'false',
+      });
+
+      //ID of the newly created room
+
+      List<String> imagePath = [
+        'gs://museum-guide-app.appspot.com/pictures/Train/train.png',
+        'gs://museum-guide-app.appspot.com/pictures/Train/trainhead.jpg',
+        'gs://museum-guide-app.appspot.com/pictures/Train/trainmotor.jpg',
+        'gs://museum-guide-app.appspot.com/pictures/Train/trainback.jpg',
+      ];
+
+      setState(() {
+        audio = audioPath;
+        imagePath = imagePath;
+        grouphost = grouphost;
+        roomId = roomId;
+        roomIdTeacher = roomIdTeacher;
+        title = title;
+        svGuide = svGuide;
+        enGuide = enGuide;
+      });
+    } else if (uri != null && uri.pathSegments.contains('guide3')) {
+      // Extract link parameters
+      // Construct paths to audio and picture files in Firebase Storage
+      const String audioPath = '/audio/audio2.mp3';
+
+      bool grouphost = false;
+
+      // final roomId = const Uuid().v4().replaceAll('-', '');
+
+      // // Create a new node for the room with the generated ID
+      // database.child('rooms/$roomId').set({
+      //   'play': 'false',
+      // });
+
+      //ID of the newly created room
+
+      List<String> imagePath = [
+        'gs://museum-guide-app.appspot.com/pictures/Train/train.png',
+        'gs://museum-guide-app.appspot.com/pictures/Train/trainhead.jpg',
+        'gs://museum-guide-app.appspot.com/pictures/Train/trainmotor.jpg',
+        'gs://museum-guide-app.appspot.com/pictures/Train/trainback.jpg',
+      ];
+
+      // runApp(
+      //   const MaterialApp(
+      //     home: MyHomePage(
+      //       audioPath: '/audio/audio2.mp3',
+      //       imagePath: [
+      //         'gs://museum-guide-app.appspot.com/pictures/Train/train.png',
+      //         'gs://museum-guide-app.appspot.com/pictures/Train/trainhead.jpg',
+      //         'gs://museum-guide-app.appspot.com/pictures/Train/trainmotor.jpg',
+      //         'gs://museum-guide-app.appspot.com/pictures/Train/trainback.jpg',
+      //       ],
+      //       grouphost: grouphost,
+      //       roomId: "guide2",
+      //       roomIdTeacher: "guide3",
+      //       title: "The Red Train",
+      //       svGuide:
+      //           "Välkommen till Gamla Linköping, en unik historisk stadsdel som tar dig tillbaka i tiden! I denna guide kommer vi att använda bilder för att guida dig genom det röda tåget och dess olika delar. Helheten av det röda tåget, Första bilden ger en överblick av det röda tåget. Tåget är klätt i den klassiska röda färgen som ger det sin karaktär. Låt blicken svepa över hela tåget och beundra dess historiska charm och eleganta design. Utsikten från förarsätet, I den här bilden får du uppleva utsikten från förarsätet. Föreställ dig själv som föraren och ta del av den vy som mötte dem när de körde tåget. Följ rälsen med blicken och föreställ dig resan genom landskapet, precis som det gjordes under tågets aktiva tid. Låt fantasin ta dig tillbaka till en svunnen era av järnvägsresor. Motorhuven, Den tredje bilden är en närbild på tågets motorhuv. Låt blicken vandra över detaljerna och beundra den tekniska skicklighet som krävdes för att hålla tåget i gång. Tänk på de människor som ansvarade för underhållet och bevara historien om ånga och mekanik som en del av vardagen på järnvägen. Bagageutrymmet,Den fjärde bilden visar bagageutrymmet på tåget. Observera utformningen och tänk på de resenärer som använde detta utrymme för att förvara sina väskor och ägodelar under resan. Låt tankarna vandra till en tid då tåget var en populär och spännande transportmetod.",
+      //       enGuide:
+      //           "Welcome to Gamla Linköping, a unique historical district that takes you back in time! In this guide, we will use pictures to guide you through the red train and its various parts. The entirety of the red train. The first picture provides an overview of the red train. The train is adorned with the classic red color that gives it its character. The view from the driver's seat, In this picture, you will experience the view from the driver's seat. Imagine yourself as the train driver and take in the view that greeted them during the train's active days. Follow the tracks with your eyes and envision the journey through the landscape, just as it was done in the train's heyday. Let your imagination take you back to a bygone era of railway travel. The engine hood. The third picture is a close-up of the train's engine hood. Let your gaze wander over the details and admire the technical skill required to keep the train running. Think about the people who were responsible for its maintenance and preserving the history of steam and mechanics as part of everyday life on the railway. The luggage compartment, The fourth picture shows the train's luggage compartment. Take note of its design and think about the travelers who used this space to store their bags and belongings during the journey. Let your thoughts wander to a time when the train was a popular and exciting mode of transportation.",
+      //     ),
+      //   ),
+      // );
+      setState(() {
+        audio = audioPath;
+        imagePath = imagePath;
+        grouphost = grouphost;
+        roomId = roomId;
+        roomIdTeacher = roomIdTeacher;
+        title = title;
+        svGuide = svGuide;
+        enGuide = enGuide;
+      });
+      //Cloetta
+    } else if (uri != null && uri.pathSegments.contains('guide4')) {
+// Extract link parameters
+
+      const bool grouphost = true;
+
+      final database = FirebaseDatabase.instance.ref();
+
+      const roomId = "guide4";
+      // Create a new node for the room with the generated ID
+      database.child('rooms/$roomId').set({
+        'enPlay': 'false',
+        'svPlay': 'false',
+      });
+
+      //ID of the newly created room
+
+      runApp(
+        const MaterialApp(
+          home: MyHomePage(
+              audioPath: '/audio/audio2.mp3',
+              imagePath: [
+                'gs://museum-guide-app.appspot.com/pictures/Torget/torg.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Torget/korvboden.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Torget/honung.jpg',
+                'gs://museum-guide-app.appspot.com/pictures/Torget/handel.jpg',
+              ],
+              grouphost: grouphost,
+              roomId: "guide4",
+              roomIdTeacher: "guide5",
+              title: "The Square Street",
+              svGuide:
+                  "Den första bilden ger en övergripande vy över Torget. Ta in scenen och betrakta de charmiga byggnaderna, kullerstensgatorna och den livliga atmosfären. Tillåt dig själv att förflyttas till en svunnen era när du fördjupar dig i den historiska miljön. På den andra bilden ser du en korvbod med affischer på väggarna. Låt dig imponeras av den autentiska korvboden och njut av synen av lockande affischer som pryder väggarna. På korvboden är det en vacker röd vägg. Låt dig förtrollas av den rika färgen och den nostalgiska känslan den förmedlar. Därefter möter du en härlig honungsstånd. Ta en stund att uppskatta dess naturliga skönhet och de söta dofterna som sprider sig i luften. Låt din fantasi sväva när du föreställer dig det livliga marknadstrevet, där både lokalbor och besökare njuter av den renaste gyllene honungen. Avslutningsvis fångas du av den livfulla marknadsscenen på Torget. Observera det varierade utbudet av stånd som erbjuder färska råvaror, handgjorda produkter och lokala delikatesser. Ta in synen och ljuden av marknaden, där handlare interagerar med kunder och luften fylls av sorlet från samtal och ibland även prutande.",
+              enGuide:
+                  "The first picture provides an overview of Square Street. Take in the scene and observe the charming buildings, cobblestone pavement, and the lively atmosphere. Allow yourself to be transported to a bygone era as you immerse yourself in the historical surroundings. In the second image, you see a shed with posters on the walls. Be impressed by the authentic shed and enjoy the sight of enticing posters adorning the walls. A beautiful red wall adds to its character, enchanting you with its rich color and nostalgic ambiance.. The third picture showcases a delightful honey stand. Take a moment to appreciate the natural beauty and the sweet aromas wafting through the air. Let your imagination wander as you envision the bustling market activity, with locals and visitors alike indulging in the pure, golden goodness of the honey. The last picture captures the vibrant market scene on Square Street. Observe the array of stalls, offering fresh produce, handcrafted goods, and local delicacies. Take in the sights and sounds of the market, where merchants interact with customers and the air is filled with the buzz of conversation and the occasional bargaining."),
+        ),
+      );
+    }
   }
 
   String formatTime(Duration duration) {
@@ -628,6 +1195,7 @@ class GuideWidgetState extends State<GuideWidget> {
     return imageProgress.last.value;
   }
 
+  Future<dynamic> _getLanguages() async => await flutterTts.getLanguages;
   @override
   Widget build(BuildContext context) {
     final guide1 = database.child('/rooms/$roomId');
@@ -644,15 +1212,15 @@ class GuideWidgetState extends State<GuideWidget> {
               borderRadius: BorderRadius.circular(20),
               child: imageWidgets[currentImageIndex],
             ),
-            const SizedBox(height: 32),
-            const Text(
-              'Guide Example',
-              style: TextStyle(
+            const SizedBox(height: 15),
+            Text(
+              title,
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Text("Room ID: $roomId"),
+            // Text("Room ID: $roomId"),
             LinearProgressIndicator(value: progress),
 
             // Button to start TTS
@@ -674,6 +1242,8 @@ class GuideWidgetState extends State<GuideWidget> {
                 },
                 child: const Icon(Icons.pause),
               ),
+            if (!grouphost) const Text("Select language dialect below"),
+            if (!grouphost) _languageslider(),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -766,6 +1336,42 @@ class GuideWidgetState extends State<GuideWidget> {
     });
   }
 
+  List<DropdownMenuItem<String>> getLanguageDropDownMenuItems(
+      dynamic languages) {
+    var items = <DropdownMenuItem<String>>[];
+    for (dynamic type in languages) {
+      items.add(DropdownMenuItem(
+          value: type as String?, child: Text(type as String)));
+    }
+    return items;
+  }
+
+  Widget _languageslider() => FutureBuilder<dynamic>(
+      future: _getLanguages(),
+      builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+        if (snapshot.hasData) {
+          return _languageDropDownSection(snapshot.data);
+        } else if (snapshot.hasError) {
+          return const Text('Error loading languages...');
+        } else {
+          return const Text('Loading Languages...');
+        }
+      });
+
+  Widget _languageDropDownSection(dynamic languages) => Container(
+      padding: const EdgeInsets.only(top: 10.0),
+      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        DropdownButton(
+          value: language,
+          items: getLanguageDropDownMenuItems(languages),
+          onChanged: changedLanguageDropDownItem,
+        ),
+        Visibility(
+          visible: isAndroid,
+          child: Text("Is installed: $isCurrentLanguageInstalled"),
+        ),
+      ]));
+
   Future<void> _speak(String text) async {
     await flutterTts.setVolume(volume);
     await flutterTts.speak(text);
@@ -803,7 +1409,6 @@ class GeoWidgetState extends State<GeoWidget> {
   }
 
   void _checkZone() {
-    print("In the ZONE3");
     // Define the zones and their coordinates
     //Torget
     final zone1 = <LatLng>[
@@ -834,6 +1439,13 @@ class GeoWidgetState extends State<GeoWidget> {
       const LatLng(58.406336, 15.589264),
       const LatLng(58.405592, 15.587458),
     ];
+    //emulator
+    final zone5 = <LatLng>[
+      const LatLng(37.3, -121.5),
+      const LatLng(37.3, -122.5),
+      const LatLng(37.8, -121.0),
+      const LatLng(37.8, -122.8),
+    ];
 
     // Check if the user is inside a zone and launch the guide if they are
     if (_currentPosition != null) {
@@ -845,7 +1457,12 @@ class GeoWidgetState extends State<GeoWidget> {
           _currentPosition!.latitude, _currentPosition!.longitude, zone3);
       final isInZone4 = _isInPolygon(
           _currentPosition!.latitude, _currentPosition!.longitude, zone4);
-      print("zone 1: $zone1, zone 2: $zone2");
+      final isInZone5 = _isInPolygon(
+          _currentPosition!.latitude, _currentPosition!.longitude, zone5);
+
+      print(_currentPosition!.latitude);
+      print(_currentPosition!.longitude);
+
       if (isInZone1) {
         print("In the ZONE");
         _runGuide(1);
@@ -858,6 +1475,9 @@ class GeoWidgetState extends State<GeoWidget> {
       } else if (isInZone4) {
         print('IN THE ZONE 4');
         _runGuide(4);
+      } else if (isInZone5) {
+        print('IN THE ZONE 5');
+        _runGuide(5);
       }
     }
   }
@@ -880,80 +1500,21 @@ class GeoWidgetState extends State<GeoWidget> {
 
   void _runGuide(int zone) {
     // Construct paths to audio and picture files in Firebase Storage
-    print('Inside zone 3');
-    //Torp
+    //Torget
     if (zone == 1) {
-      const String audioPath = '/audio/audio2.mp3';
-      const List<String> imagePath = [
-        'gs://museum-guide-app.appspot.com/pictures/torg.jpg',
-        'gs://museum-guide-app.appspot.com/pictures/torp.jpg',
-      ];
-      const bool grouphost = true;
-
-      runApp(const MaterialApp(
-        home: GuideWidget(
-          audioPath: audioPath,
-          imagePath: imagePath,
-          grouphost: grouphost,
-          roomId: '',
-          enGuide: "Sample text that will function as the text for TTS",
-          svGuide: "Exempeltext som skall användas till TTS",
-        ),
-      ));
+      Navigator.pushNamed(context, "/guide4");
+      //Ryttartorp
     } else if (zone == 2) {
-      const String audioPath = '/audio/audio2.mp3';
-      const List<String> imagePath = [
-        'gs://museum-guide-app.appspot.com/pictures/picture2.png',
-        'gs://museum-guide-app.appspot.com/pictures/torp.jpg',
-      ];
-      const bool grouphost = true;
-
-      runApp(const MaterialApp(
-        home: GuideWidget(
-          audioPath: audioPath,
-          imagePath: imagePath,
-          grouphost: grouphost,
-          roomId: '',
-          enGuide: "Sample text that will function as the text for TTS",
-          svGuide: "Exempeltext som skall användas till TTS",
-        ),
-      ));
+      Navigator.pushNamed(context, "/guide6");
+      //Gamla linköping tåg
     } else if (zone == 3) {
-      const String audioPath = '/audio/audio2.mp3';
-      const List<String> imagePath = [
-        'gs://museum-guide-app.appspot.com/pictures/picture3.png',
-        'gs://museum-guide-app.appspot.com/pictures/picture3.png',
-      ];
-      const bool grouphost = true;
-
-      runApp(const MaterialApp(
-        home: GuideWidget(
-          audioPath: audioPath,
-          imagePath: imagePath,
-          grouphost: grouphost,
-          roomId: '',
-          enGuide: "Sample text that will function as the text for TTS",
-          svGuide: "Exempeltext som skall användas till TTS",
-        ),
-      ));
+      Navigator.pushNamed(context, "/guide2");
+      //cloetta
     } else if (zone == 4) {
-      const String audioPath = '/audio/audio2.mp3';
-      const List<String> imagePath = [
-        'gs://museum-guide-app.appspot.com/pictures/picture4.jpg',
-        'gs://museum-guide-app.appspot.com/pictures/picture4.jpg',
-      ];
-      const bool grouphost = true;
-
-      runApp(const MaterialApp(
-        home: GuideWidget(
-          audioPath: audioPath,
-          imagePath: imagePath,
-          grouphost: grouphost,
-          roomId: '',
-          enGuide: "Sample text that will function as the text for TTS",
-          svGuide: "Exempeltext som skall användas till TTS",
-        ),
-      ));
+      Navigator.pushNamed(context, "/guide8");
+      //emulator
+    } else if (zone == 5) {
+      Navigator.pushNamed(context, "/guide2");
     }
   }
 
@@ -990,8 +1551,10 @@ class GenerateQRCode extends StatefulWidget {
   const GenerateQRCode({
     Key? key,
     required this.roomId,
+    required this.roomIdTeacher,
   }) : super(key: key);
   final String? roomId;
+  final String? roomIdTeacher;
 
   @override
   GenerateQRCodeState createState() => GenerateQRCodeState();
@@ -1000,7 +1563,9 @@ class GenerateQRCode extends StatefulWidget {
 class GenerateQRCodeState extends State<GenerateQRCode> {
   final database = FirebaseDatabase.instance.ref();
   String? roomId = '';
+  String? roomIdTeacher = "";
   bool invite = false;
+  bool teacherInvite = false;
 
   Future<String?> createRoom() async {
     // Generate a new ID for the room
@@ -1030,17 +1595,23 @@ class GenerateQRCodeState extends State<GenerateQRCode> {
     return dynamicLink;
   }
 
-  Future<void> _launchURL(Uri url) async {
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
-      throw 'Could not launch $url';
-    }
-  }
+  // Future<void> _launchURL(Uri url) async {
+  //   if (await canLaunchUrl(url)) {
+  //     await launchUrl(url);
+  //   } else {
+  //     throw 'Could not launch $url';
+  //   }
+  // }
 
   void enableQRCode() {
     setState(() {
       invite = true;
+    });
+  }
+
+  void enableTeacherQRCode() {
+    setState(() {
+      teacherInvite = true;
     });
   }
 
@@ -1050,6 +1621,7 @@ class GenerateQRCodeState extends State<GenerateQRCode> {
     // createRoom().then((roomId) {
     //   setState(() {
     roomId = widget.roomId;
+    roomIdTeacher = widget.roomIdTeacher;
     //   });
     // });
   }
@@ -1067,15 +1639,19 @@ class GenerateQRCodeState extends State<GenerateQRCode> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 20.0),
-                  if (invite == false)
+                  if (invite == false && teacherInvite == false)
                     ElevatedButton(
                       onPressed: () async {
                         enableQRCode();
-                        // createRoom();
-                        // final dynamicLink = await createDynamicLink(roomId!);
-                        // await _launchURL(dynamicLink);
                       },
                       child: const Text('Create invite code'),
+                    ),
+                  if (invite == false && teacherInvite == false)
+                    ElevatedButton(
+                      onPressed: () async {
+                        enableTeacherQRCode();
+                      },
+                      child: const Text('Create invite code (Teacher Mode)'),
                     ),
                   if (invite)
                     QrImage(
@@ -1083,7 +1659,16 @@ class GenerateQRCodeState extends State<GenerateQRCode> {
                       version: QrVersions.auto,
                       size: 200.0,
                     ),
+                  if (teacherInvite)
+                    QrImage(
+                      data: 'https://groupguideapp.page.link/$roomIdTeacher',
+                      version: QrVersions.auto,
+                      size: 200.0,
+                    ),
                   if (invite) const Text('Invite QR code created!'),
+                  if (teacherInvite)
+                    const Text(
+                        'Teacher Invite QR code created! \nHave your students scan the code'),
                 ],
               ),
       ),
@@ -1157,6 +1742,18 @@ class QRWidgetState extends State<QRWidget> {
           //Returned QR-code
           for (final barcode in barcodes) {
             debugPrint('Barcode found! ${barcode.rawValue}');
+            if (barcode.rawValue == "https://groupguideapp.page.link/guide2") {
+              Navigator.pushNamed(context, "/guide2");
+            } else if (barcode.rawValue ==
+                "https://groupguideapp.page.link/guide3") {
+              Navigator.pushNamed(context, "/guide3");
+            } else if (barcode.rawValue ==
+                "https://groupguideapp.page.link/guide4") {
+              Navigator.pushNamed(context, "/guide4");
+            } else if (barcode.rawValue ==
+                "https://groupguideapp.page.link/guide5") {
+              Navigator.pushNamed(context, "/guide5");
+            }
           }
         },
       ),
@@ -1241,8 +1838,6 @@ class TTSWidgetState extends State<TTSWidget> {
   @override
   Widget build(BuildContext context) {
     final dailySpecialRef = database.child('/test');
-    final guideset = database.child('/testguide');
-    final audiofile = database.child('/audioTracks');
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
